@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN: Face & Mic Update</title>
+    <title>Minecraft WN: Full Body & Sync</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
@@ -47,7 +47,7 @@
     </div>
 
     <div id="ui" style="display:none">
-        <div id="time-display">Day 08:00</div>
+        <div id="time-display">08:00</div>
         <div id="mp-toggle" onclick="toggleMPMenu()">WN</div>
         <div id="mic-btn" onclick="toggleMic()">🎤</div>
         <div id="mp-overlay">
@@ -77,17 +77,15 @@
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 
     <script>
-        let myName = "Player", mySkin = "male", currentMat = 'grass';
+        let myName, mySkin, currentMat = 'grass';
         let scene, camera, renderer, peer, conns = [], remotePlayers = {};
         let blocks = [], chunks = {};
         let lon = 0, lat = 0, moveX = 0, moveZ = 0, joyId = null, rotId = null, lastX, lastY;
-        let myStream = null, worldTime = 800, micEnabled = true;
+        let myStream = null, worldTime = 800, micEnabled = true, vy = 0;
         const myWN = Math.floor(100000 + Math.random() * 900000).toString();
 
         async function startGame() {
-            try { 
-                myStream = await navigator.mediaDevices.getUserMedia({ audio: true }); 
-            } catch(e){ console.log("Mic error"); }
+            try { myStream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch(e){}
             myName = document.getElementById('username').value || "vff";
             mySkin = document.getElementById('skin-select').value;
             document.getElementById('setup-screen').style.display = 'none';
@@ -108,74 +106,64 @@
             renderer = new THREE.WebGLRenderer({antialias: false});
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
-
             scene.add(new THREE.AmbientLight(0xffffff, 0.6));
             const sun = new THREE.DirectionalLight(0xffffff, 0.6); sun.position.set(50, 100, 50); scene.add(sun);
 
             peer = new Peer("WN-" + myWN);
             peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
-            peer.on('call', call => { 
-                call.answer(myStream); 
-                call.on('stream', s => { const a = document.createElement('audio'); a.srcObject=s; a.play(); }); 
-            });
+            peer.on('call', call => { call.answer(myStream); call.on('stream', s => { const a = document.createElement('audio'); a.srcObject=s; a.play(); }); });
             peer.on('connection', c => setupConn(c));
-
             camera.position.set(0, 15, 0);
             loop();
         }
 
         function createCharacter(data) {
             const group = new THREE.Group();
-            const skinTone = 0xffdbac;
-            const clothes = data.skin === 'male' ? 0x2a5298 : 0x2ecc71;
+            const skinMat = new THREE.MeshLambertMaterial({color: 0xffdbac});
+            const clothMat = new THREE.MeshLambertMaterial({color: data.skin === 'male' ? 0x2a5298 : 0x2ecc71});
 
-            // Head Group (for rotation)
+            // Head
             const headGrp = new THREE.Group();
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshLambertMaterial({color: skinTone}));
-            
-            // Eyes
-            const eyeGeo = new THREE.BoxGeometry(0.06, 0.06, 0.02);
-            const eyeMat = new THREE.MeshBasicMaterial({color: 0x000000});
-            const e1 = new THREE.Mesh(eyeGeo, eyeMat); e1.position.set(0.1, 0.08, 0.2);
-            const e2 = new THREE.Mesh(eyeGeo, eyeMat); e2.position.set(-0.1, 0.08, 0.2);
-            
-            // Lips
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), skinMat);
+            const eye = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.02), new THREE.MeshBasicMaterial({color: 0}));
+            const e1 = eye.clone(); e1.position.set(0.1, 0.08, 0.2);
+            const e2 = eye.clone(); e2.position.set(-0.1, 0.08, 0.2);
             const lip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.03, 0.02), new THREE.MeshBasicMaterial({color: 0x800000}));
             lip.position.set(0, -0.1, 0.2);
-            
             headGrp.add(head, e1, e2, lip);
             headGrp.position.y = 1.4;
 
             // Body
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), new THREE.MeshLambertMaterial({color: clothes}));
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), clothMat);
             body.position.y = 0.85;
+
+            // Hands
+            const armGeo = new THREE.BoxGeometry(0.15, 0.6, 0.15);
+            const handL = new THREE.Mesh(armGeo, skinMat); handL.position.set(-0.35, 0.9, 0);
+            const handR = new THREE.Mesh(armGeo, skinMat); handR.position.set(0.35, 0.9, 0);
 
             // Legs
             const legGeo = new THREE.BoxGeometry(0.2, 0.5, 0.2);
-            const l1 = new THREE.Mesh(legGeo, new THREE.MeshLambertMaterial({color: 0x333333})); l1.position.set(-0.12, 0.25, 0);
-            const l2 = new THREE.Mesh(legGeo, new THREE.MeshLambertMaterial({color: 0x333333})); l2.position.set(0.12, 0.25, 0);
+            const legL = new THREE.Mesh(legGeo, new THREE.MeshLambertMaterial({color: 0x333333})); legL.position.set(-0.12, 0.25, 0);
+            const legR = new THREE.Mesh(legGeo, new THREE.MeshLambertMaterial({color: 0x333333})); legR.position.set(0.12, 0.25, 0);
 
-            // Name Tag
+            // Name
             const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 256; canvas.height = 64;
+            const ctx = canvas.getContext('2d'); canvas.width = 256; canvas.height = 64;
             ctx.fillStyle = 'white'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center';
             ctx.fillText(data.name || "Guest", 128, 45);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(canvas)}));
             sprite.position.y = 2.0; sprite.scale.set(1.5, 0.4, 1);
 
-            group.add(headGrp, body, l1, l2, sprite);
+            group.add(headGrp, body, handL, handR, legL, legR, sprite);
             scene.add(group);
-            return { group, headGrp };
+            return { group, headGrp, handL, handR, legL, legR };
         }
 
         function loop() {
             requestAnimationFrame(loop);
-            
-            // Sky Cycle
             worldTime = (worldTime + 0.5) % 2400;
-            let isNight = worldTime > 1800 || worldTime < 600;
-            scene.background = new THREE.Color(isNight ? 0x1a1a2e : 0x87CEEB);
+            scene.background = new THREE.Color(worldTime > 1800 || worldTime < 600 ? 0x1a1a2e : 0x87CEEB);
             document.getElementById('time-display').innerText = Math.floor(worldTime/100) + ":00";
 
             camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
@@ -193,14 +181,7 @@
             let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
             for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) genChunk(cx+i, cz+j);
             
-            // Send position AND head rotation (lon/lat)
-            conns.forEach(c => { 
-                if(c.open) c.send({
-                    type:'move', id:peer.id, name:myName, skin:mySkin, 
-                    x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, 
-                    ry:lon*(Math.PI/180), rx:lat*(Math.PI/180) 
-                }); 
-            });
+            conns.forEach(c => { if(c.open) c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)}); });
             renderer.render(scene, camera);
         }
 
@@ -233,7 +214,12 @@
                 } else if(mode === 'build') { 
                     addBlock(obj.position.x+h.face.normal.x, Math.floor(obj.position.y+h.face.normal.y), obj.position.z+h.face.normal.z, currentMat); 
                 } else if(mode === 'use') {
-                    if(obj.userData.type==='door') { obj.rotation.y = obj.userData.open?0:Math.PI/2; obj.userData.open=!obj.userData.open; }
+                    if(obj.userData.type==='door') { 
+                        obj.rotation.y = obj.userData.open?0:Math.PI/2; 
+                        obj.userData.open=!obj.userData.open;
+                        // SYNC DOOR TO OTHERS
+                        conns.forEach(c => { if(c.open) c.send({type:'door', x:obj.position.x, y:obj.position.y, z:obj.position.z, open: obj.userData.open}); });
+                    }
                     if(obj.userData.type==='bed' && (worldTime>1800 || worldTime<600)) worldTime=800;
                 }
             }
@@ -245,13 +231,19 @@
                 if(d.type === 'hello') { if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d); conn.send({type:'hello-back', id:peer.id, name:myName, skin:mySkin}); }
                 if(d.type === 'hello-back') { if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d); }
                 if(d.type === 'move') { 
-                    if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d); 
-                    remotePlayers[d.id].group.position.set(d.x, d.y, d.z); 
-                    remotePlayers[d.id].headGrp.rotation.y = d.ry; // Left-Right
-                    remotePlayers[d.id].headGrp.rotation.x = -d.rx; // Up-Down
+                    let p = remotePlayers[d.id]; if(!p) p = remotePlayers[d.id] = createCharacter(d); 
+                    p.group.position.set(d.x, d.y, d.z); p.headGrp.rotation.y = d.ry; p.headGrp.rotation.x = -d.rx;
+                    // Basic animation
+                    let t = Date.now() * 0.01;
+                    p.legL.rotation.x = Math.sin(t) * 0.5; p.legR.rotation.x = -Math.sin(t) * 0.5;
+                    p.handL.rotation.x = -Math.sin(t) * 0.5; p.handR.rotation.x = Math.sin(t) * 0.5;
                 }
                 if(d.type === 'place') addBlock(d.x, d.y, d.z, d.mat, false);
                 if(d.type === 'break') { const target = blocks.find(b => Math.abs(b.position.x-d.x)<0.1 && Math.abs(b.position.z-d.z)<0.1); if(target){scene.remove(target); blocks=blocks.filter(b=>b!==target);}}
+                if(d.type === 'door') {
+                    const target = blocks.find(b => Math.abs(b.position.x-d.x)<0.1 && Math.abs(b.position.z-d.z)<0.1);
+                    if(target) { target.rotation.y = d.open ? Math.PI/2 : 0; target.userData.open = d.open; }
+                }
             });
         }
 
@@ -264,7 +256,6 @@
             }
         }
 
-        let vy = 0;
         function setMat(m, i) { currentMat = m; document.querySelectorAll('.slot').forEach((s,idx)=>s.classList.toggle('active', i===idx)); }
         function toggleMPMenu() { const m = document.getElementById('mp-overlay'); m.style.display = m.style.display==='block'?'none':'block'; }
         function joinWorld() { setupConn(peer.connect("WN-" + document.getElementById('target-wn').value)); }
