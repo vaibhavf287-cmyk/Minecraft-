@@ -3,46 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN Full Sync</title>
+    <title>Minecraft WN: Skin Edition</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         
-        #mp-toggle { position: absolute; top: 10px; left: 10px; width: 50px; height: 50px; background: #2c3e50; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; pointer-events: auto; border: 2px solid #ecf0f1; z-index: 20; }
+        /* Setup Screen */
+        #setup-screen { position: absolute; width: 100%; height: 100%; background: linear-gradient(45deg, #1e3c72, #2a5298); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: white; pointer-events: auto; }
+        .setup-box { background: rgba(0,0,0,0.8); padding: 30px; border-radius: 20px; border: 2px solid #3498db; text-align: center; width: 280px; }
+        .skin-selector { display: flex; justify-content: space-around; margin: 20px 0; }
+        .skin-opt { width: 80px; height: 100px; border: 3px solid transparent; border-radius: 10px; cursor: pointer; transition: 0.3s; padding: 5px; }
+        .skin-opt img { width: 100%; height: 100%; object-fit: contain; }
+        .skin-opt.selected { border-color: #3498db; background: rgba(52, 152, 219, 0.2); }
 
+        /* Game UI */
+        #mp-toggle { position: absolute; top: 10px; left: 10px; width: 50px; height: 50px; background: #2c3e50; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; pointer-events: auto; border: 2px solid #ecf0f1; z-index: 20; }
         #mp-overlay { position: absolute; top: 70px; left: 10px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 12px; color: #fff; font-size: 14px; pointer-events: auto; border: 2px solid #3498db; display: none; width: 200px; z-index: 20; }
-        #my-wn { color: #3498db; font-size: 22px; letter-spacing: 2px; display: block; margin-bottom: 10px; }
+        #my-wn { color: #3498db; font-size: 22px; letter-spacing: 2px; }
         input { width: 100%; background: #111; color: #3498db; border: 1px solid #3498db; padding: 12px; font-size: 16px; margin: 10px 0; border-radius: 6px; box-sizing: border-box; outline: none; }
         .menu-btn { background: #3498db; color: white; border: none; padding: 12px; font-weight: bold; border-radius: 6px; width: 100%; cursor: pointer; text-transform: uppercase; }
 
         #hotbar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; pointer-events: auto; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 12px; }
-        .slot { width: 48px; height: 48px; border: 2px solid #555; background: #8b8b8b; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; border-radius: 8px; }
+        .slot { width: 45px; height: 45px; border: 2px solid #555; background: #8b8b8b; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; border-radius: 8px; }
         .slot.active { border-color: #3498db; background: #fff; color: #000; transform: translateY(-5px); }
 
-        #joy-base { position: absolute; bottom: 40px; left: 30px; width: 110px; height: 110px; background: rgba(255,255,255,0.1); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); pointer-events: auto; }
-        #joy-stick { position: absolute; top: 50%; left: 50%; width: 45px; height: 45px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.5; }
-
+        #joy-base { position: absolute; bottom: 40px; left: 30px; width: 110px; height: 110px; background: rgba(255,255,255,0.1); border-radius: 50%; pointer-events: auto; }
+        #joy-stick { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.5; }
         .actions { position: absolute; bottom: 40px; right: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; pointer-events: auto; }
-        .btn { width: 75px; height: 75px; border-radius: 50%; border: 2px solid #fff; color: white; font-weight: bold; background: rgba(0,0,0,0.4); font-size: 12px; }
-        #jump { grid-column: span 2; height: 50px; border-radius: 25px; }
-
-        .crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 1px solid white; transform: translate(-50%, -50%); opacity: 0.5; pointer-events: none; }
-        #info-panel { position: absolute; top: 10px; right: 10px; color: white; font-size: 12px; text-align: right; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; border-left: 3px solid #3498db; }
+        .btn { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #fff; color: white; font-weight: bold; background: rgba(0,0,0,0.4); font-size: 11px; }
+        #jump { grid-column: span 2; height: 45px; border-radius: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="ui">
+    <div id="setup-screen">
+        <div class="setup-box">
+            <h2>PLAYER SETUP</h2>
+            <input type="text" id="username" placeholder="Enter Name (e.g. vff)" maxlength="10">
+            <div class="skin-selector">
+                <div class="skin-opt selected" onclick="selectSkin('male', this)" id="male-opt">
+                    <img src="https://i.ibb.co/p6Vdy0G/male-placeholder.png" alt="Male">
+                    <small>MALE</small>
+                </div>
+                <div class="skin-opt" onclick="selectSkin('female', this)" id="female-opt">
+                    <img src="https://i.ibb.co/9VfX0T5/female-placeholder.png" alt="Female">
+                    <small>FEMALE</small>
+                </div>
+            </div>
+            <button class="menu-btn" onclick="startGame()">START GAME</button>
+        </div>
+    </div>
+
+    <div id="ui" style="display:none">
         <div id="mp-toggle" onclick="toggleMPMenu()">WN</div>
         <div id="mp-overlay">
-            <small style="color:#aaa">YOUR WN:</small><br>
+            <small>WORLD NO:</small><br>
             <b id="my-wn">......</b>
-            <input type="number" id="target-wn" placeholder="Enter Friend's WN">
+            <input type="number" id="target-wn" placeholder="Friend's WN">
             <button class="menu-btn" onclick="joinWorld()">Join World</button>
-            <div id="status-text" style="font-size:10px; margin-top:10px; color:#3498db;">Standalone</div>
+            <div id="status-text" style="font-size:10px; margin-top:5px; color:#3498db;">Alone</div>
         </div>
-        <div id="info-panel"><span id="player-count">Players: 1/4</span><br><span id="coords">X: 0 | Z: 0</span></div>
-        <div class="crosshair"></div>
+        <div style="position:absolute; top:10px; right:10px; color:white; text-align:right; background:rgba(0,0,0,0.4); padding:8px; border-radius:8px;">
+            <span id="player-count">Players: 1</span><br>
+            <small id="coords">X:0 Z:0</small>
+        </div>
         <div id="hotbar">
             <div class="slot active" onclick="slotClick(0,'grass')">GRASS</div>
             <div class="slot" onclick="slotClick(1,'stone')">STONE</div>
@@ -53,8 +77,8 @@
         <div id="joy-base"><div id="joy-stick"></div></div>
         <div class="actions">
             <button class="btn" id="jump">JUMP</button>
-            <button class="btn" onclick="interact('hit')" style="background:rgba(231, 76, 60, 0.3)">HIT</button>
-            <button class="btn" onclick="interact('build')" style="background:rgba(46, 204, 113, 0.3)">BUILD</button>
+            <button class="btn" onclick="interact('hit')" style="background:rgba(231,76,60,0.3)">HIT</button>
+            <button class="btn" onclick="interact('build')" style="background:rgba(46,204,113,0.3)">BUILD</button>
         </div>
     </div>
 
@@ -62,121 +86,133 @@
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 
     <script>
-        // --- MULTIPLAYER RELAY SYSTEM ---
-        const myWN = Math.floor(100000 + Math.random() * 900000).toString();
-        const peer = new Peer("WN-" + myWN);
-        let conns = [];
-        let remotePlayers = {};
-        let currentMat = 'grass';
-        let isHost = true;
+        let myName = "Player", mySkin = "male";
+        function selectSkin(s, el) {
+            mySkin = s;
+            document.querySelectorAll('.skin-opt').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        }
 
-        peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
-        
-        peer.on('connection', conn => {
-            isHost = true; 
-            setupConn(conn);
-        });
+        function startGame() {
+            const inputName = document.getElementById('username').value.trim();
+            if(inputName) myName = inputName;
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            initGame();
+        }
+
+        // --- MULTIPLAYER CORE ---
+        let peer, conns = [], remotePlayers = {}, isHost = true;
+        const myWN = Math.floor(100000 + Math.random() * 900000).toString();
+
+        function initMultiplayer() {
+            peer = new Peer("WN-" + myWN);
+            peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
+            peer.on('connection', conn => { isHost = true; setupConn(conn); });
+        }
 
         function joinWorld() {
-            const target = document.getElementById('target-wn').value;
-            if(target && target.length === 6) {
-                isHost = false;
-                setupConn(peer.connect("WN-" + target));
-            }
+            const t = document.getElementById('target-wn').value;
+            if(t.length === 6) { isHost = false; setupConn(peer.connect("WN-" + t)); }
         }
 
         function setupConn(conn) {
-            conn.on('open', () => {
-                if(!conns.find(c => c.peer === conn.peer)) conns.push(conn);
-                updateUI();
-            });
-
+            conn.on('open', () => { if(!conns.find(c => c.peer === conn.peer)) conns.push(conn); updateUI(); });
             conn.on('data', data => {
-                // RELAY LOGIC: If I am host, send this data to everyone else
-                if(isHost) {
-                    conns.forEach(c => {
-                        if(c.peer !== conn.peer && c.open) c.send(data);
-                    });
-                }
-
-                if(data.type === 'move') syncPos(data);
+                if(isHost) conns.forEach(c => { if(c.peer !== conn.peer && c.open) c.send(data); });
+                if(data.type === 'move') updateRemote(data);
                 if(data.type === 'place') addBlock(data.x, data.y, data.z, data.mat, false);
                 if(data.type === 'break') removeBlockAt(data.x, data.y, data.z, false);
             });
-
             conn.on('close', () => removePlayer(conn.peer));
-        }
-
-        function broadcast(payload) {
-            conns.forEach(c => { if(c.open) c.send(payload); });
         }
 
         function removePlayer(id) {
             conns = conns.filter(c => c.peer !== id);
-            if(remotePlayers[id]) { scene.remove(remotePlayers[id]); delete remotePlayers[id]; }
+            if(remotePlayers[id]) { scene.remove(remotePlayers[id].group); delete remotePlayers[id]; }
             updateUI();
         }
 
-        function updateUI() {
-            document.getElementById('player-count').innerText = `Players: ${conns.length + 1}/4`;
-            document.getElementById('status-text').innerText = isHost ? "Hosting World" : "Joined World";
-        }
-
-        function syncPos(data) {
+        function updateRemote(data) {
             if(!remotePlayers[data.id]) {
-                const m = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.8, 0.6), new THREE.MeshLambertMaterial({color: 0x3498db}));
-                scene.add(m); remotePlayers[data.id] = m;
+                const group = new THREE.Group();
+                // Character Mesh (Male/Female Color logic)
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.4, 0.4), new THREE.MeshLambertMaterial({color: data.skin === 'male' ? 0x2a5298 : 0x2ecc71}));
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshLambertMaterial({color: 0xffdbac}));
+                head.position.y = 0.9;
+                group.add(body); group.add(head);
+
+                // Name Tag
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 256; canvas.height = 64;
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,256,64);
+                ctx.fillStyle = 'white'; ctx.font = '32px Arial'; ctx.textAlign = 'center';
+                ctx.fillText(data.name, 128, 45);
+                const tex = new THREE.CanvasTexture(canvas);
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: tex}));
+                sprite.position.y = 1.5; sprite.scale.set(1.5, 0.4, 1);
+                group.add(sprite);
+
+                scene.add(group);
+                remotePlayers[data.id] = { group };
             }
-            remotePlayers[data.id].position.set(data.x, data.y, data.z);
+            remotePlayers[data.id].group.position.set(data.x, data.y, data.z);
         }
 
-        // --- GAME CORE ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: false });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        // --- GAME ENGINE ---
+        let scene, camera, renderer, blocks = [], chunks = {}, velocityY = 0;
+        let lon=0, lat=0, moveX=0, moveZ=0, joyId=null, rotId=null, lastX, lastY;
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(20, 50, 20); scene.add(sun);
+        function initGame() {
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
 
-        const blockGeo = new THREE.BoxGeometry(1, 1, 1);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(20,50,20); scene.add(sun);
+            camera.position.set(0, 5, 0);
+
+            initMultiplayer();
+            loop();
+        }
+
         const materials = {
             grass: new THREE.MeshLambertMaterial({color: 0x567d46}),
             stone: new THREE.MeshLambertMaterial({color: 0x808080}),
             wood: new THREE.MeshLambertMaterial({color: 0x5d4037}),
-            leaf: new THREE.MeshLambertMaterial({color: 0x2e7d32, transparent: true, opacity: 0.8}),
+            leaf: new THREE.MeshLambertMaterial({color: 0x2e7d32}),
             glass: new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.3})
         };
 
-        let blocks = [], chunks = {};
-
         function addBlock(x,y,z, mat, sync=true) {
-            const b = new THREE.Mesh(blockGeo, materials[mat]);
-            b.position.set(x,y,z);
-            scene.add(b); blocks.push(b);
-            if(sync) broadcast({type:'place', x, y, z, mat});
+            const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), materials[mat]);
+            b.position.set(x,y,z); scene.add(b); blocks.push(b);
+            if(sync) conns.forEach(c => { if(c.open) c.send({type:'place', x, y, z, mat}); });
         }
 
         function removeBlockAt(x,y,z, sync=true) {
             const b = blocks.find(b => b.position.x === x && b.position.y === y && b.position.z === z);
-            if(b) { scene.remove(b); blocks = blocks.filter(item => item !== b); if(sync) broadcast({type:'break', x, y, z}); }
+            if(b) { scene.remove(b); blocks = blocks.filter(i => i !== b); 
+            if(sync) conns.forEach(c => { if(c.open) c.send({type:'break', x, y, z}); }); }
         }
 
         function genChunk(cx, cz) {
-            let key = `${cx},${cz}`;
-            if(chunks[key]) return;
-            chunks[key] = true;
+            let k = `${cx},${cz}`; if(chunks[k]) return; chunks[k] = true;
             for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
-                let wx = cx*8 + x, wz = cz*8 + z;
-                addBlock(wx, Math.floor(Math.sin(wx*0.2)*1.2 + Math.cos(wz*0.2)*1.2), wz, 'grass', false);
+                let wx = cx*8+x, wz = cz*8+z;
+                addBlock(wx, Math.floor(Math.sin(wx*0.2)*1.2), wz, 'grass', false);
             }
         }
 
-        // --- CONTROLS ---
+        // --- LOOP & UI ---
+        function updateUI() { document.getElementById('player-count').innerText = `Players: ${conns.length + 1}`; }
         function toggleMPMenu() { const m = document.getElementById('mp-overlay'); m.style.display = (m.style.display === 'block') ? 'none' : 'block'; }
         function slotClick(i, t) { currentMat = t; document.querySelectorAll('.slot').forEach((s,idx) => s.classList.toggle('active', idx===i)); }
+        let currentMat = 'grass';
+
         function interact(type) {
             const ray = new THREE.Raycaster(); ray.setFromCamera({x:0, y:0}, camera);
             const hits = ray.intersectObjects(blocks);
@@ -187,10 +223,9 @@
             }
         }
 
-        let lon=0, lat=0, moveX=0, moveZ=0, joyId=null, rotId=null, lastX, lastY;
         window.addEventListener('touchstart', e => {
             for(let t of e.changedTouches) {
-                if(t.target.closest('#mp-overlay') || t.target.closest('#hotbar') || t.target.id==='mp-toggle') continue;
+                if(t.target.closest('#ui div') || t.target.id === 'mp-toggle') continue;
                 if(t.clientX < window.innerWidth/2) joyId = t.identifier;
                 else { rotId = t.identifier; lastX = t.clientX; lastY = t.clientY; }
             }
@@ -208,8 +243,7 @@
                 }
                 if(t.identifier === rotId) {
                     lon += (t.clientX - lastX) * 0.4; lat -= (t.clientY - lastY) * 0.4;
-                    lat = Math.max(-85, Math.min(85, lat));
-                    lastX = t.clientX; lastY = t.clientY;
+                    lat = Math.max(-85, Math.min(85, lat)); lastX = t.clientX; lastY = t.clientY;
                 }
             }
         });
@@ -220,27 +254,25 @@
             }
         });
 
-        let vy = 0; camera.position.set(0, 5, 0);
         function loop() {
             requestAnimationFrame(loop);
             camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
             if(joyId !== null) { camera.translateZ(moveZ*0.16); camera.translateX(moveX*0.16); }
-            vy -= 0.015; camera.position.y += vy;
+            velocityY -= 0.015; camera.position.y += velocityY;
             let g = -5;
             blocks.forEach(b => {
                 if(Math.abs(camera.position.x-b.position.x)<0.6 && Math.abs(camera.position.z-b.position.z)<0.6) {
                     if(camera.position.y > b.position.y) g = Math.max(g, b.position.y+1.8);
                 }
             });
-            if(camera.position.y < g) { camera.position.y = g; vy = 0; }
+            if(camera.position.y < g) { camera.position.y = g; velocityY = 0; }
             let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
-            for(let i=-2; i<=2; i++) for(let j=-2; j<=2; j++) genChunk(cx+i, cz+j);
-            if(conns.length > 0) broadcast({type:'move', id:peer.id, x:camera.position.x, y:camera.position.y-1, z:camera.position.z});
-            document.getElementById('coords').innerText = `X: ${Math.floor(camera.position.x)} | Z: ${Math.floor(camera.position.z)}`;
+            for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) genChunk(cx+i, cz+j);
+            if(conns.length > 0) conns.forEach(c => { if(c.open) c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1, z:camera.position.z}); });
+            document.getElementById('coords').innerText = `X:${Math.floor(camera.position.x)} Z:${Math.floor(camera.position.z)}`;
             renderer.render(scene, camera);
         }
-        document.getElementById('jump').onclick = () => { if(vy===0) vy=0.25; };
-        loop();
+        document.getElementById('jump').onclick = () => { if(velocityY===0) velocityY=0.25; };
     </script>
 </body>
 </html>
