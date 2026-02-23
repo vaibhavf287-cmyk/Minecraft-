@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN: World Height Fix</title>
+    <title>Minecraft WN: Fast Load</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
@@ -21,15 +21,12 @@
         .actions { position: absolute; bottom: 40px; right: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; pointer-events: auto; }
         .btn { width: 65px; height: 65px; border-radius: 50%; border: 2px solid #fff; color: white; background: rgba(0,0,0,0.4); font-weight: bold; font-size: 10px; }
         #time-display { position: absolute; top: 10px; right: 10px; color: white; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; }
-        #sleep-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:black; opacity:0; pointer-events:none; transition: opacity 1s; z-index: 1000; }
         #notification { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 20px; display: none; z-index: 2000; }
     </style>
 </head>
 <body>
 
-    <div id="sleep-overlay"></div>
     <div id="notification"></div>
-
     <div id="setup-screen">
         <div class="setup-box">
             <h2>MINECRAFT WN</h2>
@@ -78,20 +75,6 @@
         let worldTime = 800, vy = 0;
         const myWN = Math.floor(100000 + Math.random() * 900000).toString();
 
-        async function startGame() {
-            myName = document.getElementById('username').value || "Player";
-            mySkin = document.getElementById('skin-select').value;
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('ui').style.display = 'block';
-            init();
-        }
-
-        function notify(msg) {
-            const el = document.getElementById('notification');
-            el.innerText = msg; el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 3000);
-        }
-
         const materials = {
             grass: new THREE.MeshLambertMaterial({color: 0x567d46}),
             stone: new THREE.MeshLambertMaterial({color: 0x808080}),
@@ -104,115 +87,106 @@
             gold: new THREE.MeshLambertMaterial({color: 0xffd700})
         };
 
+        async function startGame() {
+            myName = document.getElementById('username').value || "Player";
+            mySkin = document.getElementById('skin-select').value;
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            init();
+        }
+
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({antialias: false});
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-            const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(50, 100, 50); scene.add(sun);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const sun = new THREE.DirectionalLight(0xffffff, 0.4); sun.position.set(50, 100, 50); scene.add(sun);
 
             peer = new Peer("WN-" + myWN);
             peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
             peer.on('connection', c => setupConn(c));
 
-            // Set spawn point to 30 blocks high
-            camera.position.set(0, 32, 15);
-            buildGrandCastle(0, 30, -25);
+            camera.position.set(0, 32, 10);
+            buildGrandCastle(0, 30, -15);
             loop();
         }
 
         function buildGrandCastle(cx, cy, cz) {
-            for(let x=-10; x<=10; x++) {
-                for(let z=-10; z<=10; z++) {
-                    for(let y=0; y<6; y++) {
-                        if(Math.abs(x)===10 || Math.abs(z)===10) {
-                            if(!(y<3 && x===0 && z===-10)) addBlock(cx+x, cy+y, cz+z, 'stone', false);
-                        }
-                    }
-                }
+            // Simple High Castle floor
+            for(let x=-8; x<=8; x++) for(let z=-8; z<=8; z++) addBlock(cx+x, cy-1, cz+z, 'stone', false);
+            // Walls
+            for(let y=0; y<4; y++) {
+                for(let x=-8; x<=8; x++) { addBlock(cx+x, cy+y, cz-8, 'stone', false); addBlock(cx+x, cy+y, cz+8, 'stone', false); }
+                for(let z=-8; z<=8; z++) { addBlock(cx-8, cy+y, cz+z, 'stone', false); addBlock(cx+8, cy+y, cz+z, 'stone', false); }
             }
-            const corners = [[-10,-10], [10,-10], [-10,10], [10,10]];
-            corners.forEach(p => {
-                for(let y=0; y<12; y++) addBlock(cx+p[0], cy+y, cz+p[1], 'stone', false);
-                for(let x=p[0]-1; x<=p[0]+1; x++) for(let z=p[1]-1; z<=p[1]+1; z++) addBlock(cx+x, cy+12, cz+z, 'wood', false);
-            });
-            for(let z=-9; z<=9; z++) addBlock(cx, cy-0.45, cz+z, 'carpet', false);
-            for(let x=-1; x<=1; x++) {
-                addBlock(cx+x, cy, cz+8, 'gold', false);
-                addBlock(cx+x, cy+1, cz+9, 'gold', false);
-            }
-            for(let x=-9; x<=9; x++) for(let z=-9; z<=9; z++) addBlock(cx+x, cy-1, cz+z, 'stone', false);
+            // Throne
+            addBlock(cx, cy, cz+6, 'gold', false);
+            addBlock(cx, cy+1, cz+7, 'gold', false);
+        }
+
+        function addBlock(x,y,z, mat, sync=true) {
+            const geo = new THREE.BoxGeometry(1,1,1);
+            const b = new THREE.Mesh(geo, materials[mat]);
+            b.position.set(x,y,z);
+            b.userData = { type: mat };
+            scene.add(b); blocks.push(b);
+            if(sync) conns.forEach(c => { if(c.open) c.send({type:'place', x,y,z, mat}); });
         }
 
         function createCharacter(data) {
             const group = new THREE.Group();
             const skinMat = new THREE.MeshLambertMaterial({color: 0xffdbac});
             const clothMat = new THREE.MeshLambertMaterial({color: data.skin === 'male' ? 0x2a5298 : 0x2ecc71});
-            const blackMat = new THREE.MeshBasicMaterial({color: 0x000000});
-
+            
             const headGrp = new THREE.Group();
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), skinMat);
-            const eye1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), blackMat);
-            eye1.position.set(0.1, 0.05, 0.21);
-            const eye2 = eye1.clone(); eye2.position.set(-0.1, 0.05, 0.21);
-            headGrp.add(head, eye1, eye2);
-            headGrp.position.y = 1.4;
+            const eye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), new THREE.MeshBasicMaterial({color:0}));
+            const e1 = eye.clone(); e1.position.set(0.1, 0.05, 0.2);
+            const e2 = eye.clone(); e2.position.set(-0.1, 0.05, 0.2);
+            headGrp.add(head, e1, e2); headGrp.position.y = 1.4;
 
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), clothMat); body.position.y = 0.85;
             const handL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), skinMat); handL.position.set(-0.35, 0.85, 0);
             const handR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), skinMat); handR.position.set(0.35, 0.85, 0);
-            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), blackMat); legL.position.set(-0.12, 0.25, 0);
-            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), blackMat); legR.position.set(0.12, 0.25, 0);
-
-            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-            canvas.width = 128; canvas.height = 32;
-            ctx.fillStyle = 'white'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            ctx.fillText(data.name || "Player", 64, 25);
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(canvas)}));
-            sprite.position.y = 2.0; sprite.scale.set(1, 0.25, 1);
-
-            group.add(headGrp, body, handL, handR, legL, legR, sprite);
+            
+            group.add(headGrp, body, handL, handR);
             scene.add(group);
-            return { group, headGrp, handL, handR, legL, legR };
+            return { group, headGrp, handL, handR };
         }
 
         function loop() {
             requestAnimationFrame(loop);
-            worldTime = (worldTime + 0.5) % 2400;
-            let hour = Math.floor(worldTime/100);
-            document.getElementById('time-display').innerText = (hour<10?'0'+hour:hour) + ":00";
+            worldTime = (worldTime + 0.2) % 2400;
             scene.background = new THREE.Color(worldTime > 1800 || worldTime < 600 ? 0x1a1a2e : 0x87CEEB);
             
             camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
-            if(joyId !== null) { camera.translateZ(moveZ*0.15); camera.translateX(moveX*0.15); }
+            if(joyId !== null) { camera.translateZ(moveZ*0.12); camera.translateX(moveX*0.12); }
             
-            vy -= 0.012; camera.position.y += vy;
-            let ground = -10;
+            vy -= 0.01; camera.position.y += vy;
+            let ground = -50;
             blocks.forEach(b => {
-                if(b.userData.type !== 'pillow' && Math.abs(camera.position.x-b.position.x)<0.7 && Math.abs(camera.position.z-b.position.z)<0.7) {
-                    if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.8);
+                if(Math.abs(camera.position.x-b.position.x)<0.6 && Math.abs(camera.position.z-b.position.z)<0.6) {
+                    if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.6);
                 }
             });
             if(camera.position.y < ground) { camera.position.y = ground; vy = 0; }
 
             let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
-            for(let i=-2; i<=2; i++) for(let j=-2; j<=2; j++) genChunk(cx+i, cz+j);
+            genChunk(cx, cz); // Single chunk load for speed
 
-            conns.forEach(c => { 
-                if(c.open) c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)}); 
-            });
+            conns.forEach(c => { if(c.open) c.send({type:'move', id:peer.id, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180)}); });
             renderer.render(scene, camera);
         }
 
-        function addBlock(x,y,z, mat, sync=true) {
-            let geo = (mat==='door')?new THREE.BoxGeometry(1,2,0.2):(mat==='bed')?new THREE.BoxGeometry(1,0.5,2):new THREE.BoxGeometry(1,1,1);
-            const b = new THREE.Mesh(geo, materials[mat]);
-            b.position.set(x, y + (mat==='door'?0.5 : (mat==='bed'?-0.25:0)), z);
-            b.userData = { type: mat, open: false };
-            scene.add(b); blocks.push(b);
-            if(sync) conns.forEach(c => { if(c.open) c.send({type:'place', x,y,z, mat}); });
+        function genChunk(cx, cz) {
+            let k = `${cx},${cz}`; if(chunks[k]) return; chunks[k] = true;
+            for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
+                let wx = cx*8+x, wz = cz*8+z;
+                if(Math.abs(wx) < 20 && Math.abs(wz) < 20) continue; // Don't overwrite castle
+                addBlock(wx, 29, wz, 'grass', false);
+            }
         }
 
         function interact(mode) {
@@ -220,62 +194,21 @@
             const hits = ray.intersectObjects(blocks);
             if(hits.length > 0) {
                 const h = hits[0], obj = h.object;
-                if(mode === 'hit') { 
-                    scene.remove(obj); 
-                    blocks = blocks.filter(b => b !== obj); 
-                    conns.forEach(c => { if(c.open) c.send({type:'break', x:obj.position.x, y:obj.position.y, z:obj.position.z}); });
-                } else if(mode === 'build') { 
-                    addBlock(obj.position.x+h.face.normal.x, Math.floor(obj.position.y+h.face.normal.y), obj.position.z+h.face.normal.z, currentMat); 
-                } else if(mode === 'use') {
-                    if(obj.userData.type==='door') { 
-                        obj.rotation.y = obj.userData.open?0:Math.PI/2; obj.userData.open=!obj.userData.open;
-                        conns.forEach(c => { if(c.open) c.send({type:'door', x:obj.position.x, y:obj.position.y, z:obj.position.z, open: obj.userData.open}); });
-                    }
-                }
+                if(mode === 'hit') { scene.remove(obj); blocks = blocks.filter(b => b !== obj); }
+                else if(mode === 'build') addBlock(obj.position.x+h.face.normal.x, obj.position.y+h.face.normal.y, obj.position.z+h.face.normal.z, currentMat);
             }
         }
 
         function setupConn(conn) {
-            conn.on('open', () => { 
-                conns.push(conn); 
-                let worldData = blocks.filter(b => b.userData.type !== 'pillow').map(b => ({x:b.position.x, y:Math.round(b.position.y), z:b.position.z, mat:b.userData.type}));
-                conn.send({type:'worldSync', data: worldData, time: worldTime});
-                conn.send({type:'hello', id:peer.id, name:myName, skin:mySkin, friends: conns.filter(c=>c.peer!==conn.peer).map(c=>c.peer)}); 
-            });
+            conn.on('open', () => { conns.push(conn); conn.send({type:'hello', id:peer.id, name:myName, skin:mySkin}); });
             conn.on('data', d => {
-                if(d.type === 'worldSync') {
-                    d.data.forEach(b => { if(!blocks.find(ex => ex.position.x===b.x && Math.round(ex.position.y)===b.y && ex.position.z===b.z)) addBlock(b.x, b.y, b.z, b.mat, false); });
-                }
-                if(d.type === 'hello') { 
-                    if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d); 
-                    if(d.friends) d.friends.forEach(fID => { if(fID !== "WN-"+myWN && !conns.find(c=>c.peer===fID)) setupConn(peer.connect(fID)); });
-                }
+                if(d.type === 'hello') remotePlayers[d.id] = createCharacter(d);
                 if(d.type === 'move') { 
-                    let p = remotePlayers[d.id]; if(!p) p = remotePlayers[d.id] = createCharacter(d); 
-                    p.group.position.set(d.x, d.y, d.z); p.headGrp.rotation.y = d.ry; p.headGrp.rotation.x = -d.rx;
-                    let t = Date.now() * 0.01;
-                    p.legL.rotation.x = Math.sin(t) * 0.5; p.legR.rotation.x = -Math.sin(t) * 0.5;
-                }
-                if(d.type === 'break') { 
-                    const target = blocks.find(b => Math.abs(b.position.x-d.x)<0.2 && Math.abs(b.position.z-d.z)<0.2); 
-                    if(target){ scene.remove(target); blocks=blocks.filter(b=>b!==target); }
+                    let p = remotePlayers[d.id]; if(!p) return;
+                    p.group.position.set(d.x, d.y, d.z); p.headGrp.rotation.y = d.ry;
                 }
                 if(d.type === 'place') addBlock(d.x, d.y, d.z, d.mat, false);
             });
-        }
-
-        function genChunk(cx, cz) {
-            let k = `${cx},${cz}`; if(chunks[k]) return; chunks[k] = true;
-            for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
-                let wx = cx*8+x, wz = cz*8+z;
-                // Generate world floor at y=28-30 height to ensure base under player
-                let h = 28 + Math.floor(Math.sin(wx*0.1)*1.5 + Math.cos(wz*0.1)*1.5);
-                for(let y=20; y<=h; y++) {
-                    if(!blocks.find(b => b.position.x === wx && Math.round(b.position.y) === y && b.position.z === wz)) {
-                        addBlock(wx, y, wz, y===h ? 'grass' : 'stone', false);
-                    }
-                }
-            }
         }
 
         function setMat(m, i) { currentMat = m; document.querySelectorAll('.slot').forEach((s,idx)=>s.classList.toggle('active', i===idx)); }
@@ -285,7 +218,7 @@
         window.addEventListener('touchstart', e => { for(let t of e.changedTouches) { if(t.clientX < window.innerWidth/2) joyId = t.identifier; else { rotId = t.identifier; lastX = t.clientX; lastY = t.clientY; } } });
         window.addEventListener('touchmove', e => { for(let t of e.changedTouches) { if(t.identifier === joyId) { let r = document.getElementById('joy-base').getBoundingClientRect(); moveX = (t.clientX-(r.left+50))/50; moveZ = (t.clientY-(r.top+50))/50; } if(t.identifier === rotId) { lon += (t.clientX-lastX)*0.3; lat -= (t.clientY-lastY)*0.3; lat = Math.max(-85, Math.min(85, lat)); lastX = t.clientX; lastY = t.clientY; } } });
         window.addEventListener('touchend', e => { for(let t of e.changedTouches) { if(t.identifier === joyId) { joyId=null; moveX=0; moveZ=0; } if(t.identifier === rotId) rotId=null; } });
-        document.getElementById('jump').onclick = () => { if(vy === 0) vy = 0.22; };
+        document.getElementById('jump').onclick = () => { if(vy === 0) vy = 0.2; };
     </script>
 </body>
 </html>
