@@ -3,34 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN: Fixed</title>
+    <title>Minecraft WN: Mountain & Body Fix</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        
         #setup-screen { position: absolute; width: 100%; height: 100%; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: white; pointer-events: auto; }
         .setup-box { background: #333; padding: 30px; border-radius: 10px; border: 3px solid #3498db; text-align: center; }
-        #mp-toggle { position: absolute; top: 10px; left: 10px; width: 45px; height: 45px; background: rgba(0,0,0,0.6); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; pointer-events: auto; z-index: 20; border: 1px solid #fff; font-size: 12px; }
-        #mp-overlay { position: absolute; top: 65px; left: 10px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 10px; color: #fff; pointer-events: auto; display: none; width: 180px; z-index: 20; border: 1px solid #3498db; }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
-        .menu-btn { background: #3498db; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-weight: bold; margin-top: 5px; }
-        #hotbar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; pointer-events: auto; background: rgba(0,0,0,0.5); padding: 6px; border-radius: 8px; }
-        .slot { width: 45px; height: 45px; border: 2px solid #555; background: #8b8b8b; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; text-align: center; }
+        
+        #mp-toggle { position: absolute; top: 10px; left: 10px; width: 50px; height: 50px; background: rgba(0,0,0,0.6); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; pointer-events: auto; z-index: 20; border: 1px solid #fff; }
+        #mp-overlay { position: absolute; top: 70px; left: 10px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; color: #fff; pointer-events: auto; display: none; width: 200px; z-index: 20; }
+        
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
+        .menu-btn { background: #3498db; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-weight: bold; }
+
+        #hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; pointer-events: auto; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 10px; }
+        .slot { width: 45px; height: 45px; border: 2px solid #555; background: #8b8b8b; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; }
         .slot.active { border-color: #3498db; background: #fff; color: #000; }
-        #joy-base { position: absolute; bottom: 30px; left: 30px; width: 90px; height: 90px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; }
-        #joy-stick { position: absolute; top: 50%; left: 50%; width: 35px; height: 35px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.8; pointer-events: none; }
-        .actions { position: absolute; bottom: 80px; right: 20px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
-        .btn { width: 65px; height: 65px; border-radius: 50%; border: 2px solid #fff; color: white; background: rgba(0,0,0,0.4); font-weight: bold; font-size: 11px; }
-        .crosshair { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; border: 2px solid white; transform: translate(-50%, -50%); pointer-events: none; border-radius: 50%; }
+
+        #joy-base { position: absolute; bottom: 40px; left: 40px; width: 100px; height: 100px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; }
+        #joy-stick { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.6; }
+
+        .actions { position: absolute; bottom: 40px; right: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; pointer-events: auto; }
+        .btn { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #fff; color: white; background: rgba(0,0,0,0.4); font-weight: bold; }
+        .crosshair { position: absolute; top: 50%; left: 50%; width: 15px; height: 15px; border: 1px solid white; transform: translate(-50%, -50%); pointer-events: none; }
     </style>
 </head>
 <body>
+
     <div id="setup-screen">
         <div class="setup-box">
-            <h2>MINECRAFT WN</h2>
-            <input type="text" id="username" placeholder="Enter Name">
-            <select id="skin-select">
-                <option value="male">Steve</option>
-                <option value="female">Alex</option>
+            <h2>MINECRAFT PE</h2>
+            <input type="text" id="username" placeholder="Enter Name (vff)">
+            <select id="skin-select" style="width:100%; padding:10px; margin-bottom:10px;">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
             </select>
             <button class="menu-btn" onclick="startGame()">START WORLD</button>
         </div>
@@ -39,17 +46,22 @@
     <div id="ui" style="display:none">
         <div id="mp-toggle" onclick="toggleMPMenu()">WN</div>
         <div id="mp-overlay">
-            <small>WN:</small> <b id="my-wn">...</b>
+            <small>MY WN:</small> <b id="my-wn">...</b>
             <input type="number" id="target-wn" placeholder="Friend's WN">
-            <button class="menu-btn" onclick="joinWorld()">JOIN</button>
+            <button class="menu-btn" onclick="joinWorld()">JOIN FRIEND</button>
         </div>
         <div class="crosshair"></div>
-        <div id="hotbar"></div>
+        <div id="hotbar">
+            <div class="slot active" onclick="setMat('grass', 0)">GRASS</div>
+            <div class="slot" onclick="setMat('stone', 1)">STONE</div>
+            <div class="slot" onclick="setMat('wood', 2)">WOOD</div>
+            <div class="slot" onclick="setMat('leaf', 3)">LEAF</div>
+        </div>
         <div id="joy-base"><div id="joy-stick"></div></div>
         <div class="actions">
-            <button class="btn" onclick="jump()">JUMP</button>
-            <button class="btn" onclick="interact('hit')" style="background:rgba(231,76,60,0.6)">HIT</button>
-            <button class="btn" onclick="interact('build')" style="background:rgba(46,204,113,0.6)">BUILD</button>
+            <button class="btn" id="jump" style="grid-column: span 2; height: 45px; border-radius: 20px;">JUMP</button>
+            <button class="btn" onclick="interact('hit')">HIT</button>
+            <button class="btn" onclick="interact('build')">BUILD</button>
         </div>
     </div>
 
@@ -57,15 +69,11 @@
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 
     <script>
-        let myName, mySkin, currentMat = 'grass';
-        let scene, camera, renderer, peer, conns = {}, remotePlayers = {};
-        let blocks = [], animals = [];
-        let lon = 0, lat = 0, moveX = 0, moveZ = 0, joyId = null, rotId = null, lastX, lastY, vy = 0;
+        let myName = "Player", mySkin = "male", currentMat = 'grass';
+        let scene, camera, renderer, peer, conns = [], remotePlayers = {};
+        let blocks = [], chunks = {};
+        let lon = 0, lat = 0, moveX = 0, moveZ = 0, joyId = null, rotId = null, lastX, lastY;
         const myWN = Math.floor(100000 + Math.random() * 900000).toString();
-
-        const mats = { grass: 0x567d46, stone: 0x808080, wood: 0x5d4037, diamond: 0x00ffff };
-        let hotbarItems = ['grass', 'stone', 'wood', 'diamond'];
-        let activeIdx = 0;
 
         function startGame() {
             myName = document.getElementById('username').value || "vff";
@@ -73,113 +81,137 @@
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('ui').style.display = 'block';
             init();
-            renderHotbar();
         }
 
         function init() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 500);
-            renderer = new THREE.WebGLRenderer({antialias: false, powerPreference: "high-performance"});
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({antialias: false});
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(1);
             document.body.appendChild(renderer.domElement);
+
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            
+            const sun = new THREE.DirectionalLight(0xffffff, 0.4);
+            sun.position.set(50, 100, 50);
+            scene.add(sun);
+
             peer = new Peer("WN-" + myWN);
             peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
             peer.on('connection', c => setupConn(c));
 
-            // Initial floor to prevent falling
-            for(let x=-5; x<5; x++) for(let z=-5; z<5; z++) addBlock(x, 0, z, 'grass', false);
-            
-            camera.position.set(0, 10, 0);
+            camera.position.set(0, 15, 0);
             loop();
         }
 
+        const materials = {
+            grass: new THREE.MeshLambertMaterial({color: 0x567d46}),
+            stone: new THREE.MeshLambertMaterial({color: 0x808080}),
+            wood: new THREE.MeshLambertMaterial({color: 0x5d4037}),
+            leaf: new THREE.MeshLambertMaterial({color: 0x2e7d32}),
+            water: new THREE.MeshLambertMaterial({color: 0x3498db, transparent: true, opacity: 0.7})
+        };
+
         function createCharacter(data) {
             const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1, 0.4), new THREE.MeshLambertMaterial({color: data.skin==='male'?0x2a5298:0x2ecc71}));
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshLambertMaterial({color: 0xffdbac}));
-            head.position.y = 0.8;
-            
+            const skinTone = 0xffdbac;
+            const clothes = data.skin === 'male' ? 0x2a5298 : 0x2ecc71;
+
+            const headGrp = new THREE.Group();
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshLambertMaterial({color: skinTone}));
+            const eyeGeo = new THREE.BoxGeometry(0.06, 0.06, 0.02);
+            const eye = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({color: 0x000000}));
+            const e1 = eye.clone(); e1.position.set(0.1, 0.08, 0.2);
+            const e2 = eye.clone(); e2.position.set(-0.1, 0.08, 0.2);
+            const lip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.02), new THREE.MeshBasicMaterial({color: 0x800000}));
+            lip.position.set(0, -0.1, 0.2);
+            headGrp.add(head, e1, e2, lip);
+            headGrp.position.y = 1.4;
+
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), new THREE.MeshLambertMaterial({color: clothes}));
+            body.position.y = 0.85;
+
+            const armGeo = new THREE.BoxGeometry(0.18, 0.7, 0.18);
+            const armMat = new THREE.MeshLambertMaterial({color: skinTone});
+            const armL = new THREE.Mesh(armGeo, armMat); armL.position.set(-0.35, 0.85, 0);
+            const armR = new THREE.Mesh(armGeo, armMat); armR.position.set(0.35, 0.85, 0);
+
+            const legGeo = new THREE.BoxGeometry(0.22, 0.5, 0.22);
+            const legMat = new THREE.MeshLambertMaterial({color: 0x333333});
+            const legL = new THREE.Mesh(legGeo, legMat); legL.position.set(-0.12, 0.25, 0);
+            const legR = new THREE.Mesh(legGeo, legMat); legR.position.set(0.12, 0.25, 0);
+
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 64; canvas.height = 32;
-            ctx.fillStyle = 'white'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
-            ctx.fillText(data.name || "Guest", 32, 20);
+            canvas.width = 128; canvas.height = 32;
+            ctx.fillStyle = 'white'; ctx.font = '20px Arial'; ctx.textAlign = 'center';
+            ctx.fillText(data.name || "Guest", 64, 24);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(canvas)}));
-            sprite.position.y = 1.3;
-            
-            group.add(body, head, sprite);
+            sprite.position.y = 2.0; sprite.scale.set(1, 0.25, 1);
+
+            group.add(headGrp, body, armL, armR, legL, legR, sprite);
             scene.add(group);
-            return group;
+            return { group, headGrp };
         }
 
-        function addBlock(x, y, z, mat, sync=true) {
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: mats[mat]}));
-            mesh.position.set(x,y,z);
-            scene.add(mesh);
-            blocks.push(mesh);
-            if(sync) Object.values(conns).forEach(c => c.open && c.send({type:'place', x,y,z, mat}));
+        function genChunk(cx, cz) {
+            let k = `${cx},${cz}`; if(chunks[k]) return; chunks[k] = true;
+            for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
+                let wx = cx*8+x, wz = cz*8+z;
+                let h = Math.floor(Math.sin(wx*0.1)*3 + Math.cos(wz*0.1)*3);
+                for(let y=-3; y<=h; y++) {
+                    addBlock(wx, y, wz, y===h ? 'grass' : 'stone', false);
+                }
+                if(Math.random() > 0.98) {
+                    for(let th=1; th<=3; th++) addBlock(wx, h+th, wz, 'wood', false);
+                    addBlock(wx, h+4, wz, 'leaf', false);
+                }
+            }
+        }
+
+        function addBlock(x,y,z, mat, sync=true) {
+            const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), materials[mat]);
+            b.position.set(x,y,z); scene.add(b); blocks.push(b);
+            if(sync) conns.forEach(c => { if(c.open) c.send({type:'place', x,y,z, mat}); });
         }
 
         function interact(type) {
-            const ray = new THREE.Raycaster(); ray.setFromCamera({x:0, y:0}, camera);
+            const ray = new THREE.Raycaster();
+            ray.setFromCamera({x:0, y:0}, camera);
             const hits = ray.intersectObjects(blocks);
             if(hits.length > 0) {
-                const t = hits[0].object;
+                const h = hits[0];
                 if(type === 'hit') {
-                    scene.remove(t);
-                    const pos = t.position;
-                    blocks = blocks.filter(b => b !== t);
-                    Object.values(conns).forEach(c => c.open && c.send({type:'break', x:pos.x, y:pos.y, z:pos.z}));
+                    scene.remove(h.object);
+                    blocks = blocks.filter(b => b !== h.object);
+                    conns.forEach(c => { if(c.open) c.send({type:'break', x:h.object.position.x, y:h.object.position.y, z:h.object.position.z}); });
                 } else {
-                    const p = hits[0].object.position;
-                    const n = hits[0].face.normal;
-                    addBlock(p.x+n.x, p.y+n.y, p.z+n.z, hotbarItems[activeIdx]);
+                    const p = h.object.position;
+                    addBlock(p.x+h.face.normal.x, p.y+h.face.normal.y, p.z+h.face.normal.z, currentMat);
                 }
             }
-        }
-
-        function loop() {
-            requestAnimationFrame(loop);
-            camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
-            if(joyId !== null) { camera.translateZ(moveZ*0.15); camera.translateX(moveX*0.15); }
-            
-            vy -= 0.012; camera.position.y += vy;
-            let ground = 0;
-            for(let b of blocks) {
-                if(Math.abs(camera.position.x-b.position.x)<0.7 && Math.abs(camera.position.z-b.position.z)<0.7) {
-                    if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.7);
-                }
-            }
-            if(camera.position.y < ground) { camera.position.y = ground; vy = 0; }
-
-            // Sync players
-            Object.values(conns).forEach(c => {
-                if(c.open) c.send({type:'move', x:camera.position.x, y:camera.position.y-1.5, z:camera.position.z, ry:lon*Math.PI/180});
-            });
-
-            renderer.render(scene, camera);
         }
 
         function setupConn(conn) {
             conn.on('open', () => {
-                conns[conn.peer] = conn;
-                conn.send({type:'hello', name:myName, skin:mySkin});
+                conns.push(conn);
+                // Send info immediately when connected
+                conn.send({type:'hello', id:peer.id, name:myName, skin:mySkin});
             });
             conn.on('data', d => {
                 if(d.type === 'hello') {
-                    remotePlayers[conn.peer] = createCharacter(d);
-                    conn.send({type:'hello-back', name:myName, skin:mySkin});
+                    if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d);
+                    // Reply back to the joiner
+                    conn.send({type:'hello-back', id:peer.id, name:myName, skin:mySkin});
                 }
-                if(d.type === 'hello-back' && !remotePlayers[conn.peer]) {
-                    remotePlayers[conn.peer] = createCharacter(d);
+                if(d.type === 'hello-back') {
+                    if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d);
                 }
-                if(d.type === 'move' && remotePlayers[conn.peer]) {
-                    remotePlayers[conn.peer].position.set(d.x, d.y, d.z);
-                    remotePlayers[conn.peer].rotation.y = d.ry;
+                if(d.type === 'move') {
+                    if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d);
+                    remotePlayers[d.id].group.position.set(d.x, d.y, d.z);
+                    remotePlayers[d.id].headGrp.rotation.y = d.ry;
+                    remotePlayers[d.id].headGrp.rotation.x = -d.rx;
                 }
                 if(d.type === 'place') addBlock(d.x, d.y, d.z, d.mat, false);
                 if(d.type === 'break') {
@@ -188,37 +220,69 @@
                 }
             });
             conn.on('close', () => {
-                if(remotePlayers[conn.peer]) scene.remove(remotePlayers[conn.peer]);
-                delete remotePlayers[conn.peer];
-                delete conns[conn.peer];
+                // Find and remove player on disconnect
+                for(let id in remotePlayers) {
+                    if(conns.find(c => c.peer === "WN-"+id)) continue;
+                    scene.remove(remotePlayers[id].group);
+                    delete remotePlayers[id];
+                }
             });
         }
 
-        function joinWorld() {
-            const target = "WN-" + document.getElementById('target-wn').value;
-            setupConn(peer.connect(target));
+        window.addEventListener('touchstart', e => {
+            for(let t of e.changedTouches) {
+                if(t.clientX < window.innerWidth/2) joyId = t.identifier;
+                else if(!t.target.closest('button') && !t.target.closest('.slot')) { rotId = t.identifier; lastX = t.clientX; lastY = t.clientY; }
+            }
+        });
+        window.addEventListener('touchmove', e => {
+            for(let t of e.changedTouches) {
+                if(t.identifier === joyId) {
+                    let r = document.getElementById('joy-base').getBoundingClientRect();
+                    let dx = t.clientX - (r.left+50), dy = t.clientY - (r.top+50);
+                    moveX = dx/50; moveZ = dy/50;
+                    document.getElementById('joy-stick').style.left = `calc(50% + ${Math.min(Math.max(dx,-40),40)}px)`;
+                    document.getElementById('joy-stick').style.top = `calc(50% + ${Math.min(Math.max(dy,-40),40)}px)`;
+                }
+                if(t.identifier === rotId) {
+                    lon += (t.clientX - lastX)*0.3; lat -= (t.clientY - lastY)*0.3;
+                    lat = Math.max(-85, Math.min(85, lat)); lastX = t.clientX; lastY = t.clientY;
+                }
+            }
+        });
+        window.addEventListener('touchend', e => {
+            for(let t of e.changedTouches) {
+                if(t.identifier === joyId) { joyId=null; moveX=0; moveZ=0; document.getElementById('joy-stick').style.left='50%'; document.getElementById('joy-stick').style.top='50%'; }
+                if(t.identifier === rotId) rotId=null;
+            }
+        });
+
+        let vy = 0;
+        function loop() {
+            requestAnimationFrame(loop);
+            camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
+            if(joyId !== null) { camera.translateZ(moveZ*0.15); camera.translateX(moveX*0.15); }
+            
+            vy -= 0.012; camera.position.y += vy;
+            let ground = -10;
+            blocks.forEach(b => {
+                if(Math.abs(camera.position.x-b.position.x)<0.6 && Math.abs(camera.position.z-b.position.z)<0.6) {
+                    if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.8);
+                }
+            });
+            if(camera.position.y < ground) { camera.position.y = ground; vy = 0; }
+            
+            let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
+            for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) genChunk(cx+i, cz+j);
+            
+            conns.forEach(c => { if(c.open) c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)}); });
+            renderer.render(scene, camera);
         }
 
-        function renderHotbar() { document.getElementById('hotbar').innerHTML = hotbarItems.map((item, i) => `<div class="slot ${i===activeIdx?'active':''}" onclick="activeIdx=${i};renderHotbar()">${item.toUpperCase()}</div>`).join(''); }
+        function setMat(m, i) { currentMat = m; document.querySelectorAll('.slot').forEach((s,idx)=>s.classList.toggle('active', i===idx)); }
         function toggleMPMenu() { const m = document.getElementById('mp-overlay'); m.style.display = m.style.display==='block'?'none':'block'; }
-        function jump() { if(vy === 0) vy = 0.25; }
-
-        window.addEventListener('touchstart', e => { 
-            for(let t of e.changedTouches) { 
-                if(t.clientX < window.innerWidth/2) joyId = t.identifier; 
-                else { rotId = t.identifier; lastX = t.clientX; lastY = t.clientY; } 
-            } 
-        });
-        window.addEventListener('touchmove', e => { 
-            for(let t of e.changedTouches) { 
-                if(t.identifier === joyId) { 
-                    let r = document.getElementById('joy-base').getBoundingClientRect();
-                    moveX = (t.clientX - (r.left + 45))/45; moveZ = (t.clientY - (r.top + 45))/45;
-                } 
-                if(t.identifier === rotId) { lon += (t.clientX - lastX)*0.3; lat -= (t.clientY - lastY)*0.3; lastX = t.clientX; lastY = t.clientY; } 
-            } 
-        });
-        window.addEventListener('touchend', e => { for(let t of e.changedTouches) { if(t.identifier === joyId) joyId=null; if(t.identifier === rotId) rotId=null; } });
+        function joinWorld() { setupConn(peer.connect("WN-" + document.getElementById('target-wn').value)); }
+        document.getElementById('jump').onclick = () => { if(vy === 0) vy = 0.25; };
     </script>
 </body>
 </html>
