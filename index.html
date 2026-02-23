@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN: Grand Castle Fix</title>
+    <title>Minecraft WN: World Height Fix</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
@@ -117,13 +117,13 @@
             peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
             peer.on('connection', c => setupConn(c));
 
-            camera.position.set(0, 10, 15);
-            buildGrandCastle(0, 0, -25);
+            // Set spawn point to 30 blocks high
+            camera.position.set(0, 32, 15);
+            buildGrandCastle(0, 30, -25);
             loop();
         }
 
         function buildGrandCastle(cx, cy, cz) {
-            // Foundation & Walls
             for(let x=-10; x<=10; x++) {
                 for(let z=-10; z<=10; z++) {
                     for(let y=0; y<6; y++) {
@@ -133,19 +133,16 @@
                     }
                 }
             }
-            // Towers (4 corners)
             const corners = [[-10,-10], [10,-10], [-10,10], [10,10]];
             corners.forEach(p => {
                 for(let y=0; y<12; y++) addBlock(cx+p[0], cy+y, cz+p[1], 'stone', false);
                 for(let x=p[0]-1; x<=p[0]+1; x++) for(let z=p[1]-1; z<=p[1]+1; z++) addBlock(cx+x, cy+12, cz+z, 'wood', false);
             });
-            // Red Carpet & Throne
             for(let z=-9; z<=9; z++) addBlock(cx, cy-0.45, cz+z, 'carpet', false);
             for(let x=-1; x<=1; x++) {
                 addBlock(cx+x, cy, cz+8, 'gold', false);
                 addBlock(cx+x, cy+1, cz+9, 'gold', false);
             }
-            // Floor
             for(let x=-9; x<=9; x++) for(let z=-9; z<=9; z++) addBlock(cx+x, cy-1, cz+z, 'stone', false);
         }
 
@@ -155,7 +152,6 @@
             const clothMat = new THREE.MeshLambertMaterial({color: data.skin === 'male' ? 0x2a5298 : 0x2ecc71});
             const blackMat = new THREE.MeshBasicMaterial({color: 0x000000});
 
-            // Head
             const headGrp = new THREE.Group();
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), skinMat);
             const eye1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), blackMat);
@@ -164,14 +160,12 @@
             headGrp.add(head, eye1, eye2);
             headGrp.position.y = 1.4;
 
-            // Body & Limbs
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), clothMat); body.position.y = 0.85;
             const handL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), skinMat); handL.position.set(-0.35, 0.85, 0);
             const handR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), skinMat); handR.position.set(0.35, 0.85, 0);
             const legL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), blackMat); legL.position.set(-0.12, 0.25, 0);
             const legR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), blackMat); legR.position.set(0.12, 0.25, 0);
 
-            // Name Label
             const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
             canvas.width = 128; canvas.height = 32;
             ctx.fillStyle = 'white'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
@@ -254,7 +248,6 @@
                 }
                 if(d.type === 'hello') { 
                     if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d); 
-                    // Auto-connect to other players (The Relay Fix)
                     if(d.friends) d.friends.forEach(fID => { if(fID !== "WN-"+myWN && !conns.find(c=>c.peer===fID)) setupConn(peer.connect(fID)); });
                 }
                 if(d.type === 'move') { 
@@ -275,9 +268,12 @@
             let k = `${cx},${cz}`; if(chunks[k]) return; chunks[k] = true;
             for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
                 let wx = cx*8+x, wz = cz*8+z;
-                if(wx > 12 || wx < -12 || wz > 12 || wz < -12) {
-                    let h = Math.floor(Math.sin(wx*0.1)*2 + Math.cos(wz*0.1)*2);
-                    for(let y=-2; y<=h; y++) addBlock(wx, y, wz, y===h ? 'grass' : 'stone', false);
+                // Generate world floor at y=28-30 height to ensure base under player
+                let h = 28 + Math.floor(Math.sin(wx*0.1)*1.5 + Math.cos(wz*0.1)*1.5);
+                for(let y=20; y<=h; y++) {
+                    if(!blocks.find(b => b.position.x === wx && Math.round(b.position.y) === y && b.position.z === wz)) {
+                        addBlock(wx, y, wz, y===h ? 'grass' : 'stone', false);
+                    }
                 }
             }
         }
