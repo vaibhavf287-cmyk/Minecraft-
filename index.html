@@ -8,50 +8,45 @@
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         
-        /* MP Toggle Button */
         #mp-toggle { position: absolute; top: 10px; left: 10px; width: 45px; height: 45px; background: #4CAF50; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; pointer-events: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; z-index: 20; }
 
-        /* Number ID Menu (Initially Hidden) */
-        #mp-overlay { position: absolute; top: 65px; left: 10px; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 10px; color: #fff; font-size: 14px; pointer-events: auto; border: 2px solid #4CAF50; display: none; width: 160px; transition: 0.3s; }
+        #mp-overlay { position: absolute; top: 65px; left: 10px; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 10px; color: #fff; font-size: 14px; pointer-events: auto; border: 2px solid #4CAF50; display: none; width: 170px; z-index: 20; }
         #my-id { color: #4CAF50; font-size: 20px; letter-spacing: 2px; }
-        input { width: 100%; background: #111; color: #0f0; border: 1px solid #4CAF50; padding: 10px; font-size: 16px; margin: 10px 0; border-radius: 4px; box-sizing: border-box; }
+        input { width: 100%; background: #111; color: #0f0; border: 1px solid #4CAF50; padding: 10px; font-size: 16px; margin: 10px 0; border-radius: 4px; box-sizing: border-box; outline: none; }
         .menu-btn { background: #4CAF50; color: white; border: none; padding: 10px; font-weight: bold; border-radius: 4px; width: 100%; cursor: pointer; }
 
-        /* Inventory */
         #hotbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; pointer-events: auto; background: rgba(0,0,0,0.8); padding: 6px; border-radius: 8px; }
         .slot { width: 45px; height: 45px; border: 2px solid #444; background: #777; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; border-radius: 4px; }
         .slot.active { border-color: #4CAF50; background: #fff; color: #000; transform: scale(1.1); }
 
-        /* Controls */
-        #joy-base { position: absolute; bottom: 40px; left: 30px; width: 120px; height: 120px; background: rgba(255,255,255,0.15); border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); pointer-events: auto; }
-        #joy-stick { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.6; }
+        #joy-base { position: absolute; bottom: 40px; left: 30px; width: 110px; height: 110px; background: rgba(255,255,255,0.1); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); pointer-events: auto; }
+        #joy-stick { position: absolute; top: 50%; left: 50%; width: 45px; height: 45px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.5; }
 
-        .actions { position: absolute; bottom: 40px; right: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; pointer-events: auto; }
-        .btn { width: 75px; height: 75px; border-radius: 50%; border: 3px solid #fff; color: white; font-weight: bold; background: rgba(0,0,0,0.5); font-size: 12px; }
-        #jump { grid-column: span 2; height: 50px; border-radius: 25px; }
+        .actions { position: absolute; bottom: 40px; right: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; pointer-events: auto; }
+        .btn { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #fff; color: white; font-weight: bold; background: rgba(0,0,0,0.4); font-size: 11px; }
+        #jump { grid-column: span 2; height: 45px; border-radius: 20px; }
 
-        .crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid white; transform: translate(-50%, -50%); opacity: 0.5; pointer-events: none; }
-        #info { position: absolute; top: 10px; right: 10px; color: white; font-size: 11px; text-align: right; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; }
+        .crosshair { position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; border: 1px solid white; transform: translate(-50%, -50%); opacity: 0.6; pointer-events: none; }
+        #info { position: absolute; top: 10px; right: 10px; color: white; font-size: 11px; text-align: right; background: rgba(0,0,0,0.4); padding: 5px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
     <div id="ui">
         <div id="mp-toggle" onclick="toggleMPMenu()">MP</div>
-
         <div id="mp-overlay">
-            <small>MY ID:</small><br>
-            <b id="my-id">......</b><br>
+            <small>YOUR NUMBER ID:</small><br>
+            <b id="my-id">GEN...</b><br>
             <input type="number" id="peer-id" placeholder="Friend's No.">
-            <button class="menu-btn" onclick="connectToFriend()">JOIN WORLD</button>
-            <div id="stat" style="font-size:10px; margin-top:8px; color:#aaa;">Status: Solo</div>
+            <button class="menu-btn" onclick="connectToFriend()">JOIN FRIEND</button>
+            <div id="stat" style="font-size:10px; margin-top:8px; color:#4CAF50;">Status: Standalone</div>
         </div>
 
         <div id="info">Players: 1/4<br>X: 0 | Z: 0</div>
         <div class="crosshair"></div>
 
         <div id="hotbar">
-            <div class="slot active" onclick="sel(0,'grass')">GRASS</div>
+            <div class="slot active" onclick="slotClick(0,'grass')">GRASS</div>
             <div class="slot" onclick="slotClick(1,'stone')">STONE</div>
             <div class="slot" onclick="slotClick(2,'wood')">WOOD</div>
             <div class="slot" onclick="slotClick(3,'leaf')">LEAF</div>
@@ -62,8 +57,8 @@
 
         <div class="actions">
             <button class="btn" id="jump">JUMP</button>
-            <button class="btn" onclick="interact('hit')" style="background:rgba(255,0,0,0.3)">BREAK</button>
-            <button class="btn" onclick="interact('build')" style="background:rgba(0,255,0,0.3)">PLACE</button>
+            <button class="btn" onclick="interact('hit')" style="background:rgba(255,0,0,0.2)">HIT</button>
+            <button class="btn" onclick="interact('build')" style="background:rgba(0,255,0,0.2)">BUILD</button>
         </div>
     </div>
 
@@ -71,49 +66,67 @@
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 
     <script>
-        // --- UI TOGGLE LOGIC ---
-        function toggleMPMenu() {
-            const menu = document.getElementById('mp-overlay');
-            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-        }
-
-        // --- MULTI-PLAYER HUB (NUMBER ID) ---
+        // --- MULTIPLAYER ENGINE ---
         const numID = Math.floor(100000 + Math.random() * 900000).toString();
-        const peer = new Peer(numID); 
-        let activeConnections = [];
+        const peer = new Peer(numID);
+        let conns = [];
         let remotePlayers = {};
         let selectedBlock = 'grass';
 
         peer.on('open', id => document.getElementById('my-id').innerText = id);
+        
+        // Listener for incoming connections
         peer.on('connection', c => setupConnection(c));
 
         function connectToFriend() {
-            const targetID = document.getElementById('peer-id').value;
-            if(targetID.length === 6) {
-                const c = peer.connect(targetID);
-                setupConnection(c);
-            }
+            const id = document.getElementById('peer-id').value;
+            if(id && id.length === 6) setupConnection(peer.connect(id));
         }
 
         function setupConnection(c) {
             c.on('open', () => {
-                if(!activeConnections.includes(c)) activeConnections.push(c);
-                document.getElementById('stat').innerText = "Connected!";
-                document.getElementById('info').innerText = `Players: ${activeConnections.length + 1}/4`;
-                toggleMPMenu(); // Hide menu after connection
+                if(!conns.find(conn => conn.peer === c.peer)) conns.push(c);
+                updateUI();
             });
+
             c.on('data', data => {
-                if(data.type === 'm') updateRemotePlayer(data);
+                if(data.type === 'm') updateRemotePos(data.id, data.x, data.y, data.z);
                 if(data.type === 'b') addBlock(data.x, data.y, data.z, data.m, false);
                 if(data.type === 'h') removeBlockAt(data.x, data.y, data.z);
             });
+
+            c.on('close', () => removePlayer(c.peer));
+            c.on('error', () => removePlayer(c.peer));
         }
 
-        function broadcast(msg) {
-            activeConnections.forEach(c => { if(c.open) c.send(msg); });
+        function removePlayer(id) {
+            conns = conns.filter(c => c.peer !== id);
+            if(remotePlayers[id]) {
+                scene.remove(remotePlayers[id]);
+                delete remotePlayers[id];
+            }
+            updateUI();
         }
 
-        // --- ENGINE ---
+        function updateUI() {
+            document.getElementById('info').innerText = `Players: ${conns.length + 1}/4\nX: ${Math.floor(camera.position.x)} | Z: ${Math.floor(camera.position.z)}`;
+            document.getElementById('stat').innerText = conns.length > 0 ? "Linked In World" : "Standalone";
+        }
+
+        function broadcast(data) {
+            conns.forEach(c => { if(c.open) c.send(data); });
+        }
+
+        function updateRemotePos(id, x, y, z) {
+            if(!remotePlayers[id]) {
+                const p = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.8, 0.6), new THREE.MeshLambertMaterial({color: 0xff4444}));
+                scene.add(p);
+                remotePlayers[id] = p;
+            }
+            remotePlayers[id].position.set(x, y, z);
+        }
+
+        // --- WORLD ENGINE ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -121,8 +134,8 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const light = new THREE.AmbientLight(0xffffff, 0.8); scene.add(light);
-        const sun = new THREE.DirectionalLight(0xffffff, 0.4); sun.position.set(10, 50, 10); scene.add(sun);
+        const light = new THREE.AmbientLight(0xffffff, 0.7); scene.add(light);
+        const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(10, 50, 10); scene.add(sun);
 
         const geo = new THREE.BoxGeometry(1, 1, 1);
         const mats = {
@@ -130,8 +143,7 @@
             stone: new THREE.MeshLambertMaterial({color: 0x808080}),
             wood: new THREE.MeshLambertMaterial({color: 0x5d4037}),
             leaf: new THREE.MeshLambertMaterial({color: 0x2e7d32, transparent: true, opacity: 0.8}),
-            glass: new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.3}),
-            peer: new THREE.MeshLambertMaterial({color: 0xff4444})
+            glass: new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.3})
         };
 
         let blocks = [], chunks = {};
@@ -145,7 +157,7 @@
 
         function removeBlockAt(x,y,z) {
             const b = blocks.find(b => b.position.x === x && b.position.y === y && b.position.z === z);
-            if(b) { scene.remove(b); blocks = blocks.filter(item => item !== b); }
+            if(b) { scene.remove(b); blocks = blocks.filter(item => item !== b); broadcast({type:'h', x, y, z}); }
         }
 
         function genChunk(cx, cz) {
@@ -154,24 +166,21 @@
             chunks[key] = true;
             for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
                 let wx = cx*8 + x, wz = cz*8 + z;
-                let h = Math.floor(Math.sin(wx*0.15)*1.5 + Math.cos(wz*0.15)*1.5);
+                let h = Math.floor(Math.sin(wx*0.2)*1.2 + Math.cos(wz*0.2)*1.2);
                 addBlock(wx, h, wz, 'grass', false);
             }
         }
 
-        function updateRemotePlayer(data) {
-            if(!remotePlayers[data.id]) {
-                remotePlayers[data.id] = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.8, 0.6), mats.peer);
-                scene.add(remotePlayers[data.id]);
-            }
-            remotePlayers[data.id].position.set(data.x, data.y, data.z);
+        // --- CONTROLS ---
+        function toggleMPMenu() {
+            const m = document.getElementById('mp-overlay');
+            m.style.display = (m.style.display === 'block') ? 'none' : 'block';
         }
 
-        // --- CONTROLS ---
         let lon=0, lat=0, moveX=0, moveZ=0, joyId=null, rotId=null, lastX, lastY;
         window.addEventListener('touchstart', e => {
             for(let t of e.changedTouches) {
-                if(t.target.id === 'mp-toggle' || t.target.closest('#mp-overlay') || t.target.closest('#hotbar')) continue;
+                if(t.target.closest('#mp-overlay') || t.target.closest('#hotbar') || t.target.id==='mp-toggle') continue;
                 if(t.clientX < window.innerWidth/2) joyId = t.identifier;
                 else { rotId = t.identifier; lastX = t.clientX; lastY = t.clientY; }
             }
@@ -180,12 +189,12 @@
             for(let t of e.changedTouches) {
                 if(t.identifier === joyId) {
                     let r = document.getElementById('joy-base').getBoundingClientRect();
-                    let dx = t.clientX - (r.left+60), dy = t.clientY - (r.top+60);
-                    let d = Math.min(Math.sqrt(dx*dx+dy*dy), 60);
+                    let dx = t.clientX - (r.left+55), dy = t.clientY - (r.top+55);
+                    let d = Math.min(Math.sqrt(dx*dx+dy*dy), 55);
                     let a = Math.atan2(dy, dx);
                     document.getElementById('joy-stick').style.left = `calc(50% + ${Math.cos(a)*d}px)`;
                     document.getElementById('joy-stick').style.top = `calc(50% + ${Math.sin(a)*d}px)`;
-                    moveX = (Math.cos(a)*d)/60; moveZ = (Math.sin(a)*d)/60;
+                    moveX = (Math.cos(a)*d)/55; moveZ = (Math.sin(a)*d)/55;
                 }
                 if(t.identifier === rotId) {
                     lon += (t.clientX - lastX) * 0.4; lat -= (t.clientY - lastY) * 0.4;
@@ -210,13 +219,8 @@
             if(hits.length > 0) {
                 const h = hits[0];
                 const p = h.object.position;
-                if(type === 'build') {
-                    const np = p.clone().add(h.face.normal);
-                    addBlock(np.x, np.y, np.z, selectedBlock);
-                } else {
-                    removeBlockAt(p.x, p.y, p.z);
-                    broadcast({type:'h', x:p.x, y:p.y, z:p.z});
-                }
+                if(type === 'build') addBlock(p.x+h.face.normal.x, p.y+h.face.normal.y, p.z+h.face.normal.z, selectedBlock);
+                else removeBlockAt(p.x, p.y, p.z);
             }
         }
 
@@ -225,7 +229,7 @@
         function loop() {
             requestAnimationFrame(loop);
             camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
-            if(joyId !== null) { camera.translateZ(moveZ*0.15); camera.translateX(moveX*0.15); }
+            if(joyId !== null) { camera.translateZ(moveZ*0.16); camera.translateX(moveX*0.16); }
             
             vy -= 0.015; camera.position.y += vy;
             let g = -5;
@@ -236,15 +240,13 @@
             });
             if(camera.position.y < g) { camera.position.y = g; vy = 0; }
 
-            let cx = Math.floor(camera.position.x/8);
-            let cz = Math.floor(camera.position.z/8);
+            let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
             for(let i=-2; i<=2; i++) for(let j=-2; j<=2; j++) genChunk(cx+i, cz+j);
             
-            document.getElementById('info').innerHTML = `Players: ${activeConnections.length + 1}/4<br>X: ${Math.floor(camera.position.x)} | Z: ${Math.floor(camera.position.z)}`;
-
-            if(activeConnections.length > 0) {
+            if(conns.length > 0) {
                 broadcast({type:'m', id:peer.id, x:camera.position.x, y:camera.position.y-1, z:camera.position.z});
             }
+            updateUI();
             renderer.render(scene, camera);
         }
         document.getElementById('jump').onclick = () => { if(vy===0) vy=0.25; };
