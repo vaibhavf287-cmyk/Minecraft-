@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minecraft LIVE Multiplayer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
+        #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        
+        /* Multiplayer Overlay */
+        #mp-menu { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; pointer-events: auto; color: white; font-size: 10px; }
+        #mp-menu input { width: 80px; font-size: 10px; }
+
+        /* Joystick & Buttons (Same as before) */
+        #joy-base { position: absolute; bottom: 40px; left: 30px; width: 110px; height: 110px; background: rgba(255,255,255,0.1); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); pointer-events: auto; }
+        #joy-stick { position: absolute; top: 50%; left: 50%; width: 45px; height: 45px; background: rgba(255,255,255,0.4); border-radius: 50%; transform: translate(-50%, -50%); }
+
+        .btn-group { position: absolute; bottom: 40px; right: 30px; display: grid; gap: 10px; pointer-events: auto; }
+        .act-btn { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #fff; color: white; background: rgba(0,0,0,0.5); font-weight: bold; }
+        
+        .crosshair { position: absolute; top: 50%; left: 50%; width: 15px; height: 15px; border: 1px solid #fff; transform: translate(-50%, -50%); opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div id="mp-menu">
+            <div>Your ID: <span id="my-id">...</span></div>
+            <input type="text" id="peer-id" placeholder="Friend's ID">
+            <button onclick="connectToFriend()">CONNECT</button>
+            <div id="status">Status: Solo</div>
+        </div>
+        <div class="crosshair"></div>
+        <div id="joy-base"><div id="joy-stick"></div></div>
+        <div class="btn-group">
+            <button class="act-btn" id="jump-btn">JUMP</button>
+            <button class="act-btn" onclick="act('build')" style="background:rgba(0,255,0,0.2)">BUILD</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+
+    <script>
+        // --- MULTIPLAYER SETUP ---
+        const peer = new Peer(); 
+        let conn;
+        let remotePlayers = {};
+
+        peer.on('open', (id) => { document.getElementById('my-id').innerText = id; });
+        peer.on('connection', (c) => {
+            conn = c; setupConn();
+            document.getElementById('status').innerText = "Status: Connected!";
+        });
+
+        function connectToFriend() {
+            const id = document.getElementById('peer-id').value;
+            conn = peer.connect(id);
+            setupConn();
+            document.getElementById('status').innerText = "Status: Connecting...";
+        }
+
+        function setupConn() {
+            conn.on('data', (data) => {
+                if(data.type === 'move') updateRemotePlayer(data);
+                if(data.type === 'build') remoteBuild(data);
+            });
+        }
+
+        // --- GAME ENGINE ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const amb = new THREE.AmbientLight(0xffffff, 0.8); scene.add(amb);
+        const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+        const mats = {
+            grass: new THREE.MeshLambertMaterial({color: 0x4caf50}),
+            player: new THREE.MeshLambertMaterial({color: 0xffeb3b}) // Friend color
+        };
+
+        let blocks = [];
+        for(let x=-5; x<5; x++) for(let z=-5; z<5; z++) {
+            let b = new THREE.Mesh(boxGeo, mats.grass);
+            b.position.set(x, 0, z); scene.add(b); blocks.push(b);
+        }
+
+        function updateRemotePlayer(data) {
+            if(!remotePlayers[data.id]) {
+                let p = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.8, 0.6), mats.player);
+                scene.add(p); remotePlayers[data.id] = p;
+            }
+            remotePlayers[data.id].position.set(data.x, data.y, data.z);
+        }
+
+        function remoteBuild(data) {
+            let b = new THREE.Mesh(boxGeo, mats.grass);
+            b.position.set(data.x, data.y, data.z);
+            scene.add(b); blocks.push(b);
+        }
+
+        // --- CONTROLS (Multi-touch) ---
+        let lon=0, lat=0, moveX=0, moveZ=0, joyId=null, rotId=null, lastX, lastY;
+
+        document.addEventListener('touchstart', (e) => {
+            for(let t of e.changedTouches) {
+                if(t.clientX < window.innerWidth/2) joyId = t.identifier;
+                else { rotId = t.identifier; lastX = t.clientX; lastY = t.clientY; }
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            for(let t of e.changedTouches) {
+                if(t.identifier === joyId) {
+                    let r = document.getElementById('joy-base').getBoundingClientRect();
+                    let dx = t.clientX - (r.left+55), dy = t.clientY - (r.top+55);
+                    let d = Math.min(Math.sqrt(dx*dx+dy*dy), 55);
+                    let a = Math.atan2(dy, dx);
+                    document.getElementById('joy-stick').style.left = `calc(50% + ${Math.cos(a)*d}px)`;
+                    document.getElementById('joy-stick').style.top = `calc(50% + ${Math.sin(a)*d}px)`;
+                    moveX = (Math.cos(a)*d)/55; moveZ = (Math.sin(a)*d)/55;
+                }
+                if(t.identifier === rotId) {
+                    lon += (t.clientX - lastX) * 0.5;
+                    lat -= (t.clientY - lastY) * 0.5;
+                    lat = Math.max(-85, Math.min(85, lat));
+                    lastX = t.clientX; lastY = t.clientY;
+                }
+            }
+        });
+
+        document.addEventListener('touchend', (e) => {
+            for(let t of e.changedTouches) {
+                if(t.identifier === joyId) { joyId=null; moveX=0; moveZ=0; document.getElementById('joy-stick').style.left='50%'; document.getElementById('joy-stick').style.top='50%'; }
+                if(t.identifier === rotId) rotId=null;
+            }
+        });
+
+        function act(type) {
+            let r = new THREE.Raycaster(); r.setFromCamera({x:0,y:0}, camera);
+            let h = r.intersectObjects(blocks);
+            if(h.length>0) {
+                let pos = h[0].object.position.clone().add(h[0].face.normal);
+                let b = new THREE.Mesh(boxGeo, mats.grass); b.position.copy(pos);
+                scene.add(b); blocks.push(b);
+                if(conn) conn.send({type: 'build', x: pos.x, y: pos.y, z: pos.z});
+            }
+        }
+
+        // --- LOOP ---
+        let vy = 0; camera.position.set(0, 2, 5);
+        function loop() {
+            requestAnimationFrame(loop);
+            camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
+            if(joyId !== null) { camera.translateZ(moveZ*0.12); camera.translateX(moveX*0.12); }
+            
+            // Physics
+            vy -= 0.01; camera.position.y += vy;
+            if(camera.position.y < 1.8) { camera.position.y = 1.8; vy = 0; }
+
+            // Sync Position
+            if(conn && conn.open) {
+                conn.send({type: 'move', id: peer.id, x: camera.position.x, y: camera.position.y - 1, z: camera.position.z});
+            }
+
+            renderer.render(scene, camera);
+        }
+        document.getElementById('jump-btn').onclick = () => { if(vy===0) vy=0.25; };
+        loop();
+    </script>
+</body>
+</html>
