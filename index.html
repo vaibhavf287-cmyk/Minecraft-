@@ -22,8 +22,8 @@
         #joy-stick { position: absolute; top: 50%; left: 50%; width: 35px; height: 35px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.8; pointer-events: none; }
         .actions { position: absolute; bottom: 80px; right: 20px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
         .btn { width: 65px; height: 65px; border-radius: 50%; border: 2px solid #fff; color: white; background: rgba(0,0,0,0.4); font-weight: bold; font-size: 11px; }
-        #sleep-fade { position: absolute; top:0; left:0; width: 100%; height: 100%; background: black; opacity: 0; pointer-events: none; z-index: 200; transition: opacity 1s; }
         .crosshair { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; border: 2px solid white; transform: translate(-50%, -50%); pointer-events: none; border-radius: 50%; }
+        #sleep-fade { position: absolute; top:0; left:0; width: 100%; height: 100%; background: black; opacity: 0; pointer-events: none; z-index: 200; transition: opacity 1s; }
     </style>
 </head>
 <body>
@@ -43,7 +43,7 @@
     <div id="ui" style="display:none">
         <div id="mp-toggle" onclick="toggleMPMenu()">WN</div>
         <div id="mp-overlay">
-            <small>Your WN:</small> <b id="my-wn">...</b>
+            <small>WN:</small> <b id="my-wn">...</b>
             <input type="number" id="target-wn" placeholder="Friend's WN">
             <button class="menu-btn" onclick="joinWorld()">JOIN</button>
         </div>
@@ -121,7 +121,8 @@
             const e2 = eye.clone(); e2.position.set(-0.1, 0.08, 0.2);
             const lip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.02), new THREE.MeshBasicMaterial({color: 0x800000}));
             lip.position.set(0, -0.1, 0.2);
-            headGrp.add(head, e1, e2, lip); headGrp.position.y = 1.4;
+            headGrp.add(head, e1, e2, lip);
+            headGrp.position.y = 1.4;
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), new THREE.MeshLambertMaterial({color: clothes}));
             body.position.y = 0.85;
             const armGeo = new THREE.BoxGeometry(0.18, 0.7, 0.18);
@@ -135,22 +136,25 @@
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(canvas)}));
             sprite.position.y = 2.0; sprite.scale.set(1, 0.25, 1);
             group.add(headGrp, body, aL, aR, lL, lR, sprite);
-            scene.add(group); return { group, headGrp };
+            scene.add(group);
+            return { group, headGrp };
         }
 
         function createBed(x, y, z) {
             const g = new THREE.Group();
             const b = new THREE.Mesh(new THREE.BoxGeometry(1, 0.4, 2), new THREE.MeshLambertMaterial({color: 0xe74c3c}));
             const p = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.5), new THREE.MeshLambertMaterial({color: 0xffffff}));
-            p.position.set(0, 0.25, -0.6); g.add(b, p); g.position.set(x, y-0.3, z);
-            g.userData.isBed = true; return g;
+            p.position.set(0, 0.25, -0.6);
+            g.add(b, p); g.position.set(x, y-0.3, z);
+            g.userData.isBed = true;
+            return g;
         }
 
         function addBlock(x,y,z, mat, sync=true) {
             let obj;
             if(mat === 'bed') obj = createBed(x,y,z);
             else if(mat === 'door') { obj = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2, 0.1), new THREE.MeshLambertMaterial({color: 0x795548})); obj.position.set(x, y+0.5, z); }
-            else if(mat === 'apple' || mat === 'mango') { obj = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.3), new THREE.MeshLambertMaterial({color: allMaterials[mat].c})); obj.position.set(x,y,z); }
+            else if(mat === 'apple' || mat === 'mango') { obj = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshLambertMaterial({color: allMaterials[mat].c})); obj.position.set(x,y,z); }
             else { obj = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: allMaterials[mat].c})); obj.position.set(x,y,z); }
             scene.add(obj); blocks.push(obj);
             if(sync) conns.forEach(c => c.open && c.send({type:'place', x,y,z, mat}));
@@ -166,7 +170,7 @@
                     for(let th=1; th<=3; th++) addBlock(wx, h+th, wz, 'wood', false);
                     for(let lx=-1; lx<=1; lx++) for(let lz=-1; lz<=1; lz++) {
                         addBlock(wx+lx, h+4, wz+lz, 'leaf', false);
-                        if(Math.random() > 0.75) addBlock(wx+lx, h+3.6, wz+lz, Math.random() > 0.5 ? 'apple' : 'mango', false);
+                        if(Math.random() > 0.7) addBlock(wx+lx, h+3.6, wz+lz, Math.random() > 0.5 ? 'apple' : 'mango', false);
                     }
                 }
             }
@@ -184,7 +188,15 @@
                     return;
                 }
                 if(type === 'hit') {
-                    if(allMaterials[currentMat].type === 'weapon') { shoot(); return; }
+                    if(allMaterials[currentMat].type === 'weapon') {
+                        const b = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00}));
+                        b.position.copy(camera.position);
+                        const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+                        b.userData.velocity = dir.multiplyScalar(0.7); b.userData.life = 100;
+                        scene.add(b); bullets.push(b);
+                        conns.forEach(c => c.open && c.send({type:'shoot', x:b.position.x, y:b.position.y, z:b.position.z, vx:dir.x, vy:dir.y, vz:dir.z}));
+                        return;
+                    }
                     scene.remove(t); blocks = blocks.filter(b => b !== t);
                     conns.forEach(c => c.open && c.send({type:'break', x:t.position.x, y:t.position.y, z:t.position.z}));
                 } else {
@@ -192,14 +204,6 @@
                     addBlock(p.x+hits[0].face.normal.x, p.y+hits[0].face.normal.y, p.z+hits[0].face.normal.z, currentMat);
                 }
             }
-        }
-
-        function shoot() {
-            const b = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00}));
-            b.position.copy(camera.position); const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
-            b.userData.velocity = dir.multiplyScalar(0.7); b.userData.life = 100;
-            scene.add(b); bullets.push(b);
-            conns.forEach(c => c.open && c.send({type:'shoot', x:b.position.x, y:b.position.y, z:b.position.z, vx:dir.x, vy:dir.y, vz:dir.z}));
         }
 
         function loop() {
