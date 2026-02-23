@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN: Castle & Smooth Sync</title>
+    <title>Minecraft WN: Royal Mahal Edition</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
@@ -74,12 +74,12 @@
         let myName, mySkin, currentMat = 'grass';
         let scene, camera, renderer, peer, conns = [], remotePlayers = {};
         let blocks = [], chunks = {};
-        let lon = 0, lat = 0, moveX = 0, moveZ = 0, joyId = null, rotId = null, lastX, lastY;
+        let lon = 0, lat = -10, moveX = 0, moveZ = 0, joyId = null, rotId = null, lastX, lastY;
         let worldTime = 800, vy = 0;
         const myWN = Math.floor(100000 + Math.random() * 900000).toString();
 
         function startGame() {
-            myName = document.getElementById('username').value || "vff";
+            myName = document.getElementById('username').value || "Player";
             mySkin = document.getElementById('skin-select').value;
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('ui').style.display = 'block';
@@ -98,58 +98,70 @@
             renderer = new THREE.WebGLRenderer({antialias: false});
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
+            
             scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-            const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(50, 100, 50); scene.add(sun);
+            const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(10, 50, 10); scene.add(sun);
 
             peer = new Peer("WN-" + myWN);
             peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
             peer.on('connection', c => setupConn(c));
-            
-            camera.position.set(0, 10, 15);
-            buildCastle(0, 0, -20); // Generate Castle on start
+
+            camera.position.set(0, 5, 10);
+            buildRoyalMahal(0, 0, -15);
             loop();
         }
 
-        function buildCastle(cx, cy, cz) {
-            // Main Walls
-            for(let x=-7; x<=7; x++) {
-                for(let z=-7; z<=7; z++) {
-                    for(let y=0; y<5; y++) {
-                        if(Math.abs(x)===7 || Math.abs(z)===7) {
-                            if(!(y<3 && x===0 && z===-7)) addBlock(cx+x, cy+y, cz+z, 'stone', false);
+        function buildRoyalMahal(cx, cy, cz) {
+            // Walls (Stone)
+            for(let x=-8; x<=8; x++) {
+                for(let z=-8; z<=8; z++) {
+                    for(let y=0; y<6; y++) {
+                        if(Math.abs(x)===8 || Math.abs(z)===8) {
+                            if(!(y<3 && x===0 && z===-8)) addBlock(cx+x, cy+y, cz+z, 'stone', false);
                         }
                     }
                 }
             }
-            // Towers
-            const tPos = [[-7,-7], [7,-7], [-7,7], [7,7]];
-            tPos.forEach(p => {
-                for(let y=0; y<8; y++) addBlock(cx+p[0], cy+y, cz+p[1], 'stone', false);
-                for(let x=p[0]-1; x<=p[0]+1; x++) for(let z=p[1]-1; z<=p[1]+1; z++) addBlock(cx+x, cy+8, cz+z, 'wood', false);
+            // Towers (High Stone)
+            const towers = [[-8,-8], [8,-8], [-8,8], [8,8]];
+            towers.forEach(t => {
+                for(let y=0; y<10; y++) addBlock(cx+t[0], cy+y, cz+t[1], 'stone', false);
+                for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) addBlock(cx+t[0]+i, cy+10, cz+t[1]+j, 'wood', false);
             });
-            // Floor
-            for(let x=-6; x<=6; x++) for(let z=-6; z<=6; z++) addBlock(cx+x, cy-1, cz+z, 'stone', false);
+            // Carpet (Red Floor using Bed material color)
+            for(let x=-2; x<=2; x++) for(let z=-7; z<=7; z++) addBlock(cx+x, cy-1, cz+z, 'bed', false);
+            // Throne Room Base
+            for(let x=-7; x<=7; x++) for(let z=-7; z<=7; z++) if(Math.abs(x)>2 || Math.abs(z)>7) addBlock(cx+x, cy-1, cz+z, 'stone', false);
             // Throne
-            addBlock(cx, cy, cz+5, 'wood', false);
-            addBlock(cx, cy+1, cz+5, 'wood', false);
+            addBlock(cx, cy, cz+6, 'wood', false);
+            addBlock(cx, cy+1, cz+6, 'wood', false);
+            addBlock(cx-1, cy, cz+6, 'wood', false);
+            addBlock(cx+1, cy, cz+6, 'wood', false);
         }
 
         function createCharacter(data) {
             const group = new THREE.Group();
             const skinMat = new THREE.MeshLambertMaterial({color: 0xffdbac});
             const clothMat = new THREE.MeshLambertMaterial({color: data.skin === 'male' ? 0x2a5298 : 0x2ecc71});
+
             const headGrp = new THREE.Group();
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), skinMat);
-            headGrp.add(head); headGrp.position.y = 1.4;
+            const eye = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.02), new THREE.MeshBasicMaterial({color: 0}));
+            const e1 = eye.clone(); e1.position.set(0.1, 0.08, 0.2);
+            const e2 = eye.clone(); e2.position.set(-0.1, 0.08, 0.2);
+            headGrp.add(head, e1, e2); headGrp.position.y = 1.4;
+
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), clothMat); body.position.y = 0.85;
             const handL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), skinMat); handL.position.set(-0.35, 0.9, 0);
             const handR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), skinMat); handR.position.set(0.35, 0.9, 0);
             const legL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), new THREE.MeshLambertMaterial({color: 0x333333})); legL.position.set(-0.12, 0.25, 0);
             const legR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), new THREE.MeshLambertMaterial({color: 0x333333})); legR.position.set(0.12, 0.25, 0);
+
             const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 128; canvas.height = 32;
             ctx.fillStyle = 'white'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.fillText(data.name || "Guest", 64, 25);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(canvas)}));
             sprite.position.y = 2.0; sprite.scale.set(1, 0.25, 1);
+
             group.add(headGrp, body, handL, handR, legL, legR, sprite);
             scene.add(group);
             return { group, headGrp, handL, handR, legL, legR };
@@ -161,8 +173,10 @@
             let hour = Math.floor(worldTime/100);
             document.getElementById('time-display').innerText = (hour<10?'0'+hour:hour) + ":00";
             scene.background = new THREE.Color(worldTime > 1800 || worldTime < 600 ? 0x1a1a2e : 0x87CEEB);
+
             camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
             if(joyId !== null) { camera.translateZ(moveZ*0.15); camera.translateX(moveX*0.15); }
+            
             vy -= 0.012; camera.position.y += vy;
             let ground = -10;
             blocks.forEach(b => {
@@ -171,8 +185,10 @@
                 }
             });
             if(camera.position.y < ground) { camera.position.y = ground; vy = 0; }
+            
             let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
             for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) genChunk(cx+i, cz+j);
+            
             conns.forEach(c => { if(c.open) c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)}); });
             renderer.render(scene, camera);
         }
@@ -193,6 +209,7 @@
             b.position.set(x, y + (mat==='door'?0.5 : (mat==='bed'?-0.25:0)), z);
             b.userData = { type: mat, open: false };
             scene.add(b); blocks.push(b);
+            
             if(mat === 'bed') {
                 const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.2, 0.5), materials.pillow);
                 pillow.position.set(x, y-0.1, z+0.6); pillow.userData = { type: 'pillow' };
@@ -207,8 +224,7 @@
             if(hits.length > 0) {
                 const h = hits[0], obj = h.object;
                 if(mode === 'hit') { 
-                    scene.remove(obj); 
-                    blocks = blocks.filter(b => b !== obj); 
+                    scene.remove(obj); blocks = blocks.filter(b => b !== obj); 
                     conns.forEach(c => { if(c.open) c.send({type:'break', x:obj.position.x, y:obj.position.y, z:obj.position.z}); });
                 } else if(mode === 'build') { 
                     addBlock(obj.position.x+h.face.normal.x, Math.floor(obj.position.y+h.face.normal.y), obj.position.z+h.face.normal.z, currentMat); 
@@ -217,21 +233,8 @@
                         obj.rotation.y = obj.userData.open?0:Math.PI/2; obj.userData.open=!obj.userData.open;
                         conns.forEach(c => { if(c.open) c.send({type:'door', x:obj.position.x, y:obj.position.y, z:obj.position.z, open: obj.userData.open}); });
                     }
-                    if(obj.userData.type==='bed' || obj.userData.type==='pillow') {
-                        if(worldTime > 1800 || worldTime < 600) triggerSleep();
-                        else notify("You can only sleep at night!");
-                    }
                 }
             }
-        }
-
-        async function triggerSleep() {
-            document.getElementById('sleep-overlay').style.opacity = 1;
-            notify("Sleeping... 3s");
-            setTimeout(() => {
-                worldTime = 800; document.getElementById('sleep-overlay').style.opacity = 0;
-                conns.forEach(c => { if(c.open) c.send({type:'timeSync', time: 800}); });
-            }, 3000);
         }
 
         function setupConn(conn) {
@@ -246,7 +249,6 @@
                     d.data.forEach(b => { if(!blocks.find(ex => ex.position.x===b.x && Math.round(ex.position.y)===b.y && ex.position.z===b.z)) addBlock(b.x, b.y, b.z, b.mat, false); });
                     worldTime = d.time;
                 }
-                if(d.type === 'timeSync') { worldTime = d.time; document.getElementById('sleep-overlay').style.opacity = 1; setTimeout(()=>document.getElementById('sleep-overlay').style.opacity=0, 2000); }
                 if(d.type === 'hello') { if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d); conn.send({type:'hello-back', id:peer.id, name:myName, skin:mySkin}); }
                 if(d.type === 'hello-back') { if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d); }
                 if(d.type === 'move') { 
@@ -257,10 +259,9 @@
                 }
                 if(d.type === 'place') addBlock(d.x, d.y, d.z, d.mat, false);
                 if(d.type === 'break') { 
-                    const target = blocks.find(b => Math.abs(b.position.x-d.x)<0.2 && Math.abs(b.position.z-d.z)<0.2 && Math.abs(b.position.y-d.y)<0.5); 
-                    if(target){ scene.remove(target); blocks=blocks.filter(b=>b!==target); }
+                    const target = blocks.find(b => Math.abs(b.position.x-d.x)<0.1 && Math.abs(b.position.z-d.z)<0.1 && Math.abs(b.position.y-d.y)<0.5); 
+                    if(target){scene.remove(target); blocks=blocks.filter(b=>b!==target);}
                 }
-                if(d.type === 'door') { const target = blocks.find(b => Math.abs(b.position.x-d.x)<0.1); if(target) { target.rotation.y = d.open ? Math.PI/2 : 0; target.userData.open = d.open; }}
             });
         }
 
@@ -268,9 +269,10 @@
             let k = `${cx},${cz}`; if(chunks[k]) return; chunks[k] = true;
             for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
                 let wx = cx*8+x, wz = cz*8+z;
-                if(wx > 10 || wx < -10 || wz > 10 || wz < -10) { // Don't overwrite castle area
-                    let h = Math.floor(Math.sin(wx*0.1)*2 + Math.cos(wz*0.1)*2);
-                    for(let y=-3; y<=h; y++) addBlock(wx, y, wz, y===h ? 'grass' : 'stone', false);
+                // Don't generate ground under castle area
+                if(Math.abs(wx) > 10 || Math.abs(wz+15) > 10) {
+                   let h = Math.floor(Math.sin(wx*0.1)*2 + Math.cos(wz*0.1)*2);
+                   for(let y=-2; y<=h; y++) addBlock(wx, y, wz, y===h ? 'grass' : 'stone', false);
                 }
             }
         }
