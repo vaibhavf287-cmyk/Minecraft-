@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN: Infinite & Animals</title>
+    <title>Minecraft WN: Lag Fix & MP</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
@@ -95,16 +95,23 @@
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({antialias: false});
+            renderer = new THREE.WebGLRenderer({antialias: false, powerPreference: "high-performance"});
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             document.body.appendChild(renderer.domElement);
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
             const sun = new THREE.DirectionalLight(0xffffff, 0.5);
             sun.position.set(20, 50, 20);
             scene.add(sun);
+            
             peer = new Peer("WN-" + myWN);
             peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
-            peer.on('connection', c => setupConn(c));
+            peer.on('connection', c => {
+                setupConn(c);
+                c.on('open', () => {
+                    c.send({type:'hello', name:myName, skin:mySkin});
+                });
+            });
             camera.position.set(0, 15, 0);
             loop();
         }
@@ -143,33 +150,40 @@
             const aR = new THREE.Mesh(armGeo, new THREE.MeshLambertMaterial({color: skinTone})); aR.position.set(0.35, 0.85, 0);
             const lL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.5, 0.22), new THREE.MeshLambertMaterial({color: 0x333333})); lL.position.set(-0.12, 0.25, 0);
             const lR = lL.clone(); lR.position.set(0.12, 0.25, 0);
+            
             const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
             canvas.width = 128; canvas.height = 32; ctx.fillStyle = 'white'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            ctx.fillText(data.name, 64, 24);
+            ctx.fillText(data.name || "Player", 64, 24);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(canvas)}));
             sprite.position.y = 2.0; sprite.scale.set(1, 0.25, 1);
+            
             group.add(headGrp, body, aL, aR, lL, lR, sprite);
             scene.add(group);
             return { group, headGrp };
         }
 
-        function createBed(x, y, z) {
-            const g = new THREE.Group();
-            const b = new THREE.Mesh(new THREE.BoxGeometry(1, 0.4, 2), new THREE.MeshLambertMaterial({color: 0xe74c3c}));
-            const p = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.5), new THREE.MeshLambertMaterial({color: 0xffffff}));
-            p.position.set(0, 0.25, -0.6);
-            g.add(b, p); g.position.set(x, y-0.3, z);
-            g.userData.isBed = true;
-            return g;
-        }
-
         function addBlock(x,y,z, mat, sync=true) {
             let obj;
-            if(mat === 'bed') obj = createBed(x,y,z);
-            else if(mat === 'door') { obj = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2, 0.1), new THREE.MeshLambertMaterial({color: 0x795548})); obj.position.set(x, y+0.5, z); }
-            else if(mat === 'apple' || mat === 'mango') { obj = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshLambertMaterial({color: allMaterials[mat].c})); obj.position.set(x,y,z); }
-            else { obj = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: allMaterials[mat].c})); obj.position.set(x,y,z); }
-            scene.add(obj); blocks.push(obj);
+            if(mat === 'bed') {
+                const g = new THREE.Group();
+                const b = new THREE.Mesh(new THREE.BoxGeometry(1, 0.4, 2), new THREE.MeshLambertMaterial({color: 0xe74c3c}));
+                const p = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.5), new THREE.MeshLambertMaterial({color: 0xffffff}));
+                p.position.set(0, 0.25, -0.6);
+                g.add(b, p); g.position.set(x, y-0.3, z);
+                g.userData.isBed = true;
+                obj = g;
+            } else if(mat === 'door') { 
+                obj = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2, 0.1), new THREE.MeshLambertMaterial({color: 0x795548})); 
+                obj.position.set(x, y+0.5, z); 
+            } else if(mat === 'apple' || mat === 'mango') { 
+                obj = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshLambertMaterial({color: allMaterials[mat].c})); 
+                obj.position.set(x,y,z); 
+            } else { 
+                obj = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: allMaterials[mat].c})); 
+                obj.position.set(x,y,z); 
+            }
+            scene.add(obj); 
+            blocks.push(obj);
             if(sync) conns.forEach(c => c.open && c.send({type:'place', x,y,z, mat}));
         }
 
@@ -177,16 +191,12 @@
             let k = `${cx},${cz}`; if(chunks[k]) return; chunks[k] = true;
             for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
                 let wx = cx*8+x, wz = cz*8+z;
-                let h = Math.floor(Math.sin(wx*0.1)*3 + Math.cos(wz*0.1)*3);
-                for(let y=-2; y<=h; y++) addBlock(wx, y, wz, 'grass', false);
-                if(Math.random() > 0.985) {
+                let h = Math.floor(Math.sin(wx*0.1)*2 + Math.cos(wz*0.1)*2);
+                for(let y=-1; y<=h; y++) addBlock(wx, y, wz, 'grass', false);
+                if(Math.random() > 0.99) {
                     for(let th=1; th<=3; th++) addBlock(wx, h+th, wz, 'wood', false);
-                    for(let lx=-1; lx<=1; lx++) for(let lz=-1; lz<=1; lz++) {
-                        addBlock(wx+lx, h+4, wz+lz, 'leaf', false);
-                        if(Math.random() > 0.7) addBlock(wx+lx, h+3.6, wz+lz, Math.random() > 0.5 ? 'apple' : 'mango', false);
-                    }
                 }
-                if(Math.random() > 0.996) createAnimal(wx, h+1, wz, Math.random()>0.5?'cow':'pig');
+                if(Math.random() > 0.998) createAnimal(wx, h+1, wz, Math.random()>0.5?'cow':'pig');
             }
         }
 
@@ -195,12 +205,6 @@
             const hits = ray.intersectObjects(blocks, true);
             if(hits.length > 0) {
                 let t = hits[0].object; while(t.parent !== scene && t.parent) t = t.parent;
-                if(type === 'build' && t.userData.isBed) {
-                    const fade = document.getElementById('sleep-fade');
-                    fade.style.opacity = 1;
-                    setTimeout(() => { fade.style.opacity = 0; }, 1500);
-                    return;
-                }
                 if(type === 'hit') {
                     if(allMaterials[currentMat].type === 'weapon') {
                         const b = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00}));
@@ -220,13 +224,30 @@
             }
         }
 
+        function cleanFarBlocks() {
+            blocks = blocks.filter(b => {
+                if (b.position.distanceTo(camera.position) > 40) {
+                    scene.remove(b);
+                    return false;
+                }
+                return true;
+            });
+            // Reset chunks object to allow regeneration
+            chunks = {};
+        }
+        setInterval(cleanFarBlocks, 5000);
+
         function loop() {
             requestAnimationFrame(loop);
             camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
             if(joyId !== null) { camera.translateZ(moveZ*0.15); camera.translateX(moveX*0.15); }
             vy -= 0.012; camera.position.y += vy;
             let ground = -10;
-            for(let b of blocks) { if(Math.abs(camera.position.x-b.position.x)<0.6 && Math.abs(camera.position.z-b.position.z)<0.6) { if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.8); } }
+            for(let b of blocks) { 
+                if(Math.abs(camera.position.x-b.position.x)<0.6 && Math.abs(camera.position.z-b.position.z)<0.6) { 
+                    if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.8); 
+                } 
+            }
             if(camera.position.y < ground) { camera.position.y = ground; vy = 0; }
             
             animals.forEach(a => {
@@ -239,10 +260,43 @@
             });
 
             bullets.forEach((b, i) => { b.position.add(b.userData.velocity); b.userData.life--; if(b.userData.life <= 0) { scene.remove(b); bullets.splice(i, 1); } });
+            
             let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
-            for(let i=-2; i<=2; i++) for(let j=-2; j<=2; j++) genChunk(cx+i, cz+j);
-            conns.forEach(c => c.open && c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)}));
+            for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) genChunk(cx+i, cz+j);
+            
+            if(conns.length > 0) {
+                conns.forEach(c => {
+                    if(c.open) c.send({type:'move', id:peer.id, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)});
+                });
+            }
+            
             renderer.render(scene, camera);
+        }
+
+        function setupConn(conn) {
+            conn.on('data', d => {
+                if(d.type === 'hello') {
+                    remotePlayers[conn.peer] = createCharacter({name:d.name, skin:d.skin});
+                    // Reply back so they see us too
+                    conn.send({type:'hello-reply', name:myName, skin:mySkin});
+                }
+                if(d.type === 'hello-reply') {
+                    if(!remotePlayers[conn.peer]) remotePlayers[conn.peer] = createCharacter({name:d.name, skin:d.skin});
+                }
+                if(d.type === 'move') { 
+                    if(remotePlayers[conn.peer]) {
+                        remotePlayers[conn.peer].group.position.set(d.x, d.y, d.z); 
+                        remotePlayers[conn.peer].headGrp.rotation.y = d.ry; 
+                        remotePlayers[conn.peer].headGrp.rotation.x = -d.rx; 
+                    }
+                }
+                if(d.type === 'place') addBlock(d.x, d.y, d.z, d.mat, false);
+                if(d.type === 'break') { 
+                    const target = blocks.find(b => b.position.x===d.x && b.position.y===d.y && b.position.z===d.z); 
+                    if(target) { scene.remove(target); blocks = blocks.filter(b => b !== target); } 
+                }
+            });
+            conns.push(conn);
         }
 
         function renderHotbar() { document.getElementById('hotbar').innerHTML = hotbarItems.map((item, i) => `<div class="slot ${i===activeIdx?'active':''}" onclick="setActive(${i})">${item.toUpperCase()}</div>`).join(''); currentMat = hotbarItems[activeIdx]; }
@@ -252,15 +306,13 @@
         function toggleInventory() { const s = document.getElementById('inventory-screen'); s.style.display = s.style.display==='grid'?'none':'grid'; }
         function toggleMPMenu() { const m = document.getElementById('mp-overlay'); m.style.display = m.style.display==='block'?'none':'block'; }
         function jump() { if(vy === 0) vy = 0.25; }
-        function joinWorld() { setupConn(peer.connect("WN-" + document.getElementById('target-wn').value)); }
-        function setupConn(conn) {
-            conn.on('data', d => {
-                if(d.type === 'move') { if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d); remotePlayers[d.id].group.position.set(d.x, d.y, d.z); remotePlayers[d.id].headGrp.rotation.y = d.ry; remotePlayers[d.id].headGrp.rotation.x = -d.rx; }
-                if(d.type === 'place') addBlock(d.x, d.y, d.z, d.mat, false);
-                if(d.type === 'break') { const target = blocks.find(b => b.position.x===d.x && b.position.y===d.y && b.position.z===d.z); if(target) { scene.remove(target); blocks = blocks.filter(b => b !== target); } }
-                if(d.type === 'shoot') { const b = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00})); b.position.set(d.x, d.y, d.z); b.userData.velocity = new THREE.Vector3(d.vx, d.vy, d.vz).multiplyScalar(0.7); b.userData.life = 100; scene.add(b); bullets.push(b); }
-            }); conns.push(conn);
+        function joinWorld() { 
+            const targetID = "WN-" + document.getElementById('target-wn').value;
+            const c = peer.connect(targetID);
+            setupConn(c);
+            c.on('open', () => c.send({type:'hello', name:myName, skin:mySkin}));
         }
+
         window.addEventListener('touchstart', e => { 
             for(let t of e.changedTouches) { 
                 if(t.clientX < window.innerWidth/2) joyId = t.identifier; 
