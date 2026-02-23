@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN: Inventory Edition</title>
+    <title>Minecraft WN: Real Items & Guns</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
@@ -14,12 +14,11 @@
         #mp-toggle { position: absolute; top: 10px; left: 10px; width: 45px; height: 45px; background: rgba(0,0,0,0.6); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; pointer-events: auto; z-index: 20; border: 1px solid #fff; font-size: 12px; }
         #mp-overlay { position: absolute; top: 65px; left: 10px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 10px; color: #fff; pointer-events: auto; display: none; width: 180px; z-index: 20; border: 1px solid #3498db; }
         
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
         .menu-btn { background: #3498db; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-weight: bold; margin-top: 5px; }
 
-        /* Inventory & Hotbar */
         #hotbar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; pointer-events: auto; background: rgba(0,0,0,0.5); padding: 6px; border-radius: 8px; }
-        .slot { width: 40px; height: 40px; border: 2px solid #555; background: #8b8b8b; display: flex; align-items: center; justify-content: center; font-size: 8px; color: white; text-align: center; overflow: hidden; }
+        .slot { width: 45px; height: 45px; border: 2px solid #555; background: #8b8b8b; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; text-align: center; }
         .slot.active { border-color: #3498db; background: #fff; color: #000; }
         
         #inv-toggle { position: absolute; bottom: 15px; right: 15px; width: 45px; height: 45px; background: #444; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; pointer-events: auto; border: 2px solid #fff; font-size: 10px; }
@@ -29,21 +28,21 @@
         #joy-stick { position: absolute; top: 50%; left: 50%; width: 35px; height: 35px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.6; }
 
         .actions { position: absolute; bottom: 80px; right: 20px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
-        .btn { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff; color: white; background: rgba(0,0,0,0.4); font-weight: bold; font-size: 10px; }
-        .crosshair { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border: 1px solid white; transform: translate(-50%, -50%); pointer-events: none; }
+        .btn { width: 65px; height: 65px; border-radius: 50%; border: 2px solid #fff; color: white; background: rgba(0,0,0,0.4); font-weight: bold; font-size: 11px; }
+        .crosshair { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; border: 2px solid white; transform: translate(-50%, -50%); pointer-events: none; border-radius: 50%; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h2>MINECRAFT PE</h2>
-            <input type="text" id="username" placeholder="Name (e.g. vff)">
-            <select id="skin-select" style="width:100%; padding:10px; margin-bottom:10px;">
+            <h2>MINECRAFT WN</h2>
+            <input type="text" id="username" placeholder="Name (vff)">
+            <select id="skin-select">
                 <option value="male">Male (Steve)</option>
                 <option value="female">Female (Alex)</option>
             </select>
-            <button class="menu-btn" onclick="startGame()">START WORLD</button>
+            <button class="menu-btn" onclick="startGame()">START</button>
         </div>
     </div>
 
@@ -54,23 +53,15 @@
             <input type="number" id="target-wn" placeholder="Friend's WN">
             <button class="menu-btn" onclick="joinWorld()">JOIN</button>
         </div>
-
         <div class="crosshair"></div>
-
-        <div id="inventory-screen">
-            </div>
-
-        <div id="hotbar">
-            </div>
-
+        <div id="inventory-screen"></div>
+        <div id="hotbar"></div>
         <div id="inv-toggle" onclick="toggleInventory()">INV</div>
-
         <div id="joy-base"><div id="joy-stick"></div></div>
-        
         <div class="actions">
             <button class="btn" onclick="jump()">JUMP</button>
-            <button class="btn" onclick="interact('hit')" style="background:rgba(231,76,60,0.5)">HIT</button>
-            <button class="btn" onclick="interact('build')" style="background:rgba(46,204,113,0.5)">BUILD</button>
+            <button class="btn" onclick="interact('hit')" style="background:rgba(231,76,60,0.6)">HIT / SHOOT</button>
+            <button class="btn" onclick="interact('build')" style="background:rgba(46,204,113,0.6)">BUILD</button>
         </div>
     </div>
 
@@ -78,20 +69,24 @@
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 
     <script>
-        let myName = "Player", mySkin = "male", currentMat = 'grass';
+        let myName, mySkin, currentMat = 'grass';
         let scene, camera, renderer, peer, conns = [], remotePlayers = {};
-        let blocks = [], chunks = {};
+        let blocks = [], chunks = {}, bullets = [];
         let lon = 0, lat = 0, moveX = 0, moveZ = 0, joyId = null, rotId = null, lastX, lastY;
         const myWN = Math.floor(100000 + Math.random() * 900000).toString();
 
         const allMaterials = {
-            grass: {c: 0x567d46}, stone: {c: 0x808080}, wood: {c: 0x5d4037}, leaf: {c: 0x2e7d32},
-            bed: {c: 0xe74c3c}, door: {c: 0x795548}, sword: {c: 0xbdc3c7}, pickaxe: {c: 0x95a5a6},
-            glass: {c: 0xffffff, t: true, o: 0.4}, water: {c: 0x3498db, t: true, o: 0.6},
-            diamond: {c: 0x00ffff}, gold: {c: 0xffd700}, tnt: {c: 0xff0000}
+            grass: {c: 0x567d46, type:'block'}, 
+            stone: {c: 0x808080, type:'block'}, 
+            wood: {c: 0x5d4037, type:'block'}, 
+            bed: {c: 0xe74c3c, type:'special'}, 
+            door: {c: 0x795548, type:'special'}, 
+            sword: {c: 0xbdc3c7, type:'weapon'},
+            gun: {c: 0x333333, type:'weapon'},
+            diamond: {c: 0x00ffff, type:'block'}
         };
 
-        let hotbarItems = ['grass', 'stone', 'wood', 'bed', 'sword'];
+        let hotbarItems = ['grass', 'stone', 'bed', 'door', 'gun'];
         let activeIdx = 0;
 
         function startGame() {
@@ -108,105 +103,189 @@
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 500);
-            renderer = new THREE.WebGLRenderer({antialias: false, powerPreference: "high-performance"});
-            renderer.setPixelRatio(window.devicePixelRatio > 1 ? 1 : 1); // Lag optimization
+            renderer = new THREE.WebGLRenderer({antialias: false});
+            renderer.setPixelRatio(1);
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const sun = new THREE.DirectionalLight(0xffffff, 0.4);
-            sun.position.set(20, 50, 20);
+            const sun = new THREE.DirectionalLight(0xffffff, 0.5);
+            sun.position.set(10, 50, 10);
             scene.add(sun);
 
             peer = new Peer("WN-" + myWN);
             peer.on('open', id => document.getElementById('my-wn').innerText = myWN);
             peer.on('connection', c => setupConn(c));
 
-            camera.position.set(0, 10, 0);
+            camera.position.set(0, 12, 0);
             loop();
         }
 
-        function createCharacter(data) {
+        // --- SPECIAL MODELS ---
+        function createBed(x, y, z) {
             const group = new THREE.Group();
-            const clothes = data.skin === 'male' ? 0x2a5298 : 0x2ecc71;
-            const headGrp = new THREE.Group();
-            headGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshLambertMaterial({color: 0xffdbac})));
-            headGrp.position.y = 1.4;
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), new THREE.MeshLambertMaterial({color: clothes}));
-            body.position.y = 0.85;
-            const arm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), new THREE.MeshLambertMaterial({color: 0xffdbac}));
-            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), new THREE.MeshLambertMaterial({color: 0x333333}));
-            const aL=arm.clone(); aL.position.set(-0.35,0.85,0);
-            const aR=arm.clone(); aR.position.set(0.35,0.85,0);
-            const lL=leg.clone(); lL.position.set(-0.12,0.25,0);
-            const lR=leg.clone(); lR.position.set(0.12,0.25,0);
-            group.add(headGrp, body, aL, aR, lL, lR);
-            scene.add(group);
-            return { group, headGrp };
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1, 0.4, 2), new THREE.MeshLambertMaterial({color: 0xe74c3c}));
+            const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.5), new THREE.MeshLambertMaterial({color: 0xffffff}));
+            pillow.position.set(0, 0.25, -0.6);
+            group.add(body, pillow);
+            group.position.set(x, y-0.3, z);
+            return group;
+        }
+
+        function createDoor(x, y, z) {
+            const group = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2, 0.1), new THREE.MeshLambertMaterial({color: 0x795548}));
+            group.position.set(x, y+0.5, z);
+            return group;
+        }
+
+        function addBlock(x,y,z, mat, sync=true) {
+            let obj;
+            if(mat === 'bed') obj = createBed(x,y,z);
+            else if(mat === 'door') obj = createDoor(x,y,z);
+            else {
+                obj = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: allMaterials[mat].c}));
+                obj.position.set(x,y,z);
+            }
+            scene.add(obj); blocks.push(obj);
+            if(sync) conns.forEach(c => c.open && c.send({type:'place', x,y,z, mat}));
+        }
+
+        function shoot() {
+            const bullet = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00}));
+            bullet.position.copy(camera.position);
+            const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+            bullet.userData.velocity = dir.multiplyScalar(0.8);
+            bullet.userData.life = 100;
+            scene.add(bullet);
+            bullets.push(bullet);
+            conns.forEach(c => c.open && c.send({type:'shoot', x:bullet.position.x, y:bullet.position.y, z:bullet.position.z, vx:dir.x, vy:dir.y, vz:dir.z}));
+        }
+
+        function interact(type) {
+            if(type === 'hit') {
+                if(allMaterials[currentMat].type === 'weapon') { shoot(); return; }
+                const ray = new THREE.Raycaster();
+                ray.setFromCamera({x:0, y:0}, camera);
+                const hits = ray.intersectObjects(blocks, true);
+                if(hits.length > 0) {
+                    let target = hits[0].object;
+                    while(target.parent !== scene) target = target.parent;
+                    scene.remove(target);
+                    blocks = blocks.filter(b => b !== target);
+                    conns.forEach(c => c.open && c.send({type:'break', x:target.position.x, y:target.position.y, z:target.position.z}));
+                }
+            } else {
+                const ray = new THREE.Raycaster();
+                ray.setFromCamera({x:0, y:0}, camera);
+                const hits = ray.intersectObjects(blocks.filter(b => b.geometry && b.geometry.type === 'BoxGeometry'), true);
+                if(hits.length > 0) {
+                    const h = hits[0];
+                    addBlock(h.object.position.x+h.face.normal.x, h.object.position.y+h.face.normal.y, h.object.position.z+h.face.normal.z, currentMat);
+                }
+            }
         }
 
         function genChunk(cx, cz) {
             let k = `${cx},${cz}`; if(chunks[k]) return; chunks[k] = true;
             for(let x=0; x<8; x++) for(let z=0; z<8; z++) {
                 let wx = cx*8+x, wz = cz*8+z;
-                let h = Math.floor(Math.sin(wx*0.1)*2 + Math.cos(wz*0.1)*2);
+                let h = Math.floor(Math.sin(wx*0.15)*2 + Math.cos(wz*0.15)*2);
                 addBlock(wx, h, wz, 'grass', false);
-                if(Math.random() > 0.99) {
-                    for(let th=1; th<3; th++) addBlock(wx, h+th, wz, 'wood', false);
-                }
             }
         }
 
-        function addBlock(x,y,z, mat, sync=true) {
-            const m = allMaterials[mat];
-            const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: m.c, transparent: m.t||false, opacity: m.o||1}));
-            b.position.set(x,y,z); scene.add(b); blocks.push(b);
-            if(sync) conns.forEach(c => c.open && c.send({type:'place', x,y,z, mat}));
+        function createCharacter(data) {
+            const group = new THREE.Group();
+            const headGrp = new THREE.Group();
+            headGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshLambertMaterial({color: 0xffdbac})));
+            headGrp.position.y = 1.4;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), new THREE.MeshLambertMaterial({color: data.skin==='male'?0x2a5298:0x2ecc71}));
+            body.position.y = 0.85;
+            const arm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), new THREE.MeshLambertMaterial({color: 0xffdbac}));
+            const aL=arm.clone(); aL.position.set(-0.35,0.85,0);
+            const aR=arm.clone(); aR.position.set(0.35,0.85,0);
+            const lL=new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), new THREE.MeshLambertMaterial({color: 0x333333}));
+            lL.position.set(-0.12,0.25,0);
+            const lR=lL.clone(); lR.position.set(0.12,0.25,0);
+            group.add(headGrp, body, aL, aR, lL, lR);
+            scene.add(group);
+            return { group, headGrp };
         }
 
-        function interact(type) {
-            const ray = new THREE.Raycaster();
-            ray.setFromCamera({x:0, y:0}, camera);
-            const hits = ray.intersectObjects(blocks);
-            if(hits.length > 0) {
-                const h = hits[0];
-                if(type === 'hit') {
-                    scene.remove(h.object);
-                    blocks = blocks.filter(b => b !== h.object);
-                    conns.forEach(c => c.open && c.send({type:'break', x:h.object.position.x, y:h.object.position.y, z:h.object.position.z}));
-                } else {
-                    const p = h.object.position;
-                    addBlock(p.x+h.face.normal.x, p.y+h.face.normal.y, p.z+h.face.normal.z, currentMat);
+        function loop() {
+            requestAnimationFrame(loop);
+            camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
+            if(joyId !== null) { camera.translateZ(moveZ*0.15); camera.translateX(moveX*0.15); }
+            
+            vy -= 0.012; camera.position.y += vy;
+            let ground = -5;
+            for(let b of blocks) {
+                if(Math.abs(camera.position.x-b.position.x)<0.7 && Math.abs(camera.position.z-b.position.z)<0.7) {
+                    if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.8);
                 }
             }
+            if(camera.position.y < ground) { camera.position.y = ground; vy = 0; }
+            
+            // Bullet Update
+            bullets.forEach((b, i) => {
+                b.position.add(b.userData.velocity);
+                b.userData.life--;
+                if(b.userData.life <= 0) { scene.remove(b); bullets.splice(i, 1); }
+            });
+
+            let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
+            for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) genChunk(cx+i, cz+j);
+            
+            conns.forEach(c => c.open && c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)}));
+            renderer.render(scene, camera);
         }
 
-        // --- UI RENDERERS ---
         function renderHotbar() {
             const h = document.getElementById('hotbar');
-            h.innerHTML = hotbarItems.map((item, i) => `
-                <div class="slot ${i===activeIdx?'active':''}" onclick="setActive(${i})">${item.toUpperCase()}</div>
-            `).join('');
+            h.innerHTML = hotbarItems.map((item, i) => `<div class="slot ${i===activeIdx?'active':''}" onclick="setActive(${i})">${item.toUpperCase()}</div>`).join('');
             currentMat = hotbarItems[activeIdx];
         }
 
         function renderInventory() {
             const inv = document.getElementById('inventory-screen');
-            inv.innerHTML = Object.keys(allMaterials).map(item => `
-                <div class="slot" style="width:50px; height:50px" onclick="pickToHotbar('${item}')">${item.toUpperCase()}</div>
-            `).join('');
+            inv.innerHTML = Object.keys(allMaterials).map(item => `<div class="slot" style="width:50px; height:50px" onclick="pickToHotbar('${item}')">${item.toUpperCase()}</div>`).join('');
         }
 
         function setActive(i) { activeIdx = i; renderHotbar(); }
         function pickToHotbar(item) { hotbarItems[activeIdx] = item; renderHotbar(); toggleInventory(); }
         function toggleInventory() { const s = document.getElementById('inventory-screen'); s.style.display = s.style.display==='grid'?'none':'grid'; }
         function toggleMPMenu() { const m = document.getElementById('mp-overlay'); m.style.display = m.style.display==='block'?'none':'block'; }
+        function jump() { if(vy === 0) vy = 0.25; }
+        function joinWorld() { setupConn(peer.connect("WN-" + document.getElementById('target-wn').value)); }
 
-        // --- CONTROLS ---
+        function setupConn(conn) {
+            conn.on('data', d => {
+                if(d.type === 'move') {
+                    if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d);
+                    remotePlayers[d.id].group.position.set(d.x, d.y, d.z);
+                    remotePlayers[d.id].headGrp.rotation.y = d.ry;
+                    remotePlayers[d.id].headGrp.rotation.x = -d.rx;
+                }
+                if(d.type === 'place') addBlock(d.x, d.y, d.z, d.mat, false);
+                if(d.type === 'break') {
+                    const target = blocks.find(b => b.position.x===d.x && b.position.y===d.y && b.position.z===d.z);
+                    if(target) { scene.remove(target); blocks = blocks.filter(b => b !== target); }
+                }
+                if(d.type === 'shoot') {
+                    const b = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00}));
+                    b.position.set(d.x, d.y, d.z);
+                    b.userData.velocity = new THREE.Vector3(d.vx, d.vy, d.vz).multiplyScalar(0.8);
+                    b.userData.life = 100;
+                    scene.add(b); bullets.push(b);
+                }
+            });
+            conns.push(conn);
+        }
+
         window.addEventListener('touchstart', e => {
             for(let t of e.changedTouches) {
                 if(t.clientX < window.innerWidth/2) joyId = t.identifier;
-                else if(!t.target.closest('button') && !t.target.closest('.slot')) { rotId = t.identifier; lastX = t.clientX; lastY = t.clientY; }
+                else if(!t.target.closest('button')) { rotId = t.identifier; lastX = t.clientX; lastY = t.clientY; }
             }
         });
         window.addEventListener('touchmove', e => {
@@ -230,44 +309,7 @@
             }
         });
 
-        function setupConn(conn) {
-            conn.on('data', d => {
-                if(d.type === 'move') {
-                    if(!remotePlayers[d.id]) remotePlayers[d.id] = createCharacter(d);
-                    remotePlayers[d.id].group.position.set(d.x, d.y, d.z);
-                    remotePlayers[d.id].headGrp.rotation.y = d.ry;
-                    remotePlayers[d.id].headGrp.rotation.x = -d.rx;
-                }
-                if(d.type === 'place') addBlock(d.x, d.y, d.z, d.mat, false);
-                if(d.type === 'break') {
-                    const target = blocks.find(b => b.position.x===d.x && b.position.y===d.y && b.position.z===d.z);
-                    if(target) { scene.remove(target); blocks = blocks.filter(b => b !== target); }
-                }
-            });
-            conns.push(conn);
-        }
-
         let vy = 0;
-        function loop() {
-            requestAnimationFrame(loop);
-            camera.lookAt(new THREE.Vector3().setFromSphericalCoords(1,(90-lat)*Math.PI/180, lon*Math.PI/180).add(camera.position));
-            if(joyId !== null) { camera.translateZ(moveZ*0.14); camera.translateX(moveX*0.14); }
-            vy -= 0.012; camera.position.y += vy;
-            let ground = -5;
-            for(let b of blocks) {
-                if(Math.abs(camera.position.x-b.position.x)<0.6 && Math.abs(camera.position.z-b.position.z)<0.6) {
-                    if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.8);
-                }
-            }
-            if(camera.position.y < ground) { camera.position.y = ground; vy = 0; }
-            let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
-            for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) genChunk(cx+i, cz+j);
-            conns.forEach(c => c.open && c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)}));
-            renderer.render(scene, camera);
-        }
-
-        function jump() { if(vy === 0) vy = 0.22; }
-        function joinWorld() { setupConn(peer.connect("WN-" + document.getElementById('target-wn').value)); }
     </script>
 </body>
 </html>
