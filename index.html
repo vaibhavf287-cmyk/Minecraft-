@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft WN: Full Fix</title>
+    <title>Minecraft WN: Infinite & Animals</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87CEEB; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
         #ui { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
@@ -65,7 +65,7 @@
     <script>
         let myName, mySkin, currentMat = 'grass';
         let scene, camera, renderer, peer, conns = [], remotePlayers = {};
-        let blocks = [], chunks = {}, bullets = [];
+        let blocks = [], chunks = {}, bullets = [], animals = [];
         let lon = 0, lat = 0, moveX = 0, moveZ = 0, joyId = null, rotId = null, lastX, lastY, vy = 0;
         const myWN = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -107,6 +107,19 @@
             peer.on('connection', c => setupConn(c));
             camera.position.set(0, 15, 0);
             loop();
+        }
+
+        function createAnimal(x, y, z, type) {
+            const group = new THREE.Group();
+            const color = (type === 'cow') ? 0x4b2c20 : 0xffc0cb;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.8), new THREE.MeshLambertMaterial({color}));
+            body.position.y = 0.4;
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshLambertMaterial({color}));
+            head.position.set(0, 0.5, 0.45);
+            group.add(body, head);
+            group.position.set(x, y, z);
+            scene.add(group);
+            animals.push({mesh: group, nextMove: 0, dir: new THREE.Vector3()});
         }
 
         function createCharacter(data) {
@@ -166,13 +179,14 @@
                 let wx = cx*8+x, wz = cz*8+z;
                 let h = Math.floor(Math.sin(wx*0.1)*3 + Math.cos(wz*0.1)*3);
                 for(let y=-2; y<=h; y++) addBlock(wx, y, wz, 'grass', false);
-                if(Math.random() > 0.98) {
+                if(Math.random() > 0.985) {
                     for(let th=1; th<=3; th++) addBlock(wx, h+th, wz, 'wood', false);
                     for(let lx=-1; lx<=1; lx++) for(let lz=-1; lz<=1; lz++) {
                         addBlock(wx+lx, h+4, wz+lz, 'leaf', false);
                         if(Math.random() > 0.7) addBlock(wx+lx, h+3.6, wz+lz, Math.random() > 0.5 ? 'apple' : 'mango', false);
                     }
                 }
+                if(Math.random() > 0.996) createAnimal(wx, h+1, wz, Math.random()>0.5?'cow':'pig');
             }
         }
 
@@ -214,9 +228,19 @@
             let ground = -10;
             for(let b of blocks) { if(Math.abs(camera.position.x-b.position.x)<0.6 && Math.abs(camera.position.z-b.position.z)<0.6) { if(camera.position.y > b.position.y) ground = Math.max(ground, b.position.y+1.8); } }
             if(camera.position.y < ground) { camera.position.y = ground; vy = 0; }
+            
+            animals.forEach(a => {
+                if(Date.now() > a.nextMove) {
+                    a.dir.set(Math.random()-0.5, 0, Math.random()-0.5).normalize();
+                    a.nextMove = Date.now() + 2000 + Math.random()*3000;
+                }
+                a.mesh.position.addScaledVector(a.dir, 0.02);
+                a.mesh.lookAt(a.mesh.position.clone().add(a.dir));
+            });
+
             bullets.forEach((b, i) => { b.position.add(b.userData.velocity); b.userData.life--; if(b.userData.life <= 0) { scene.remove(b); bullets.splice(i, 1); } });
             let cx = Math.floor(camera.position.x/8), cz = Math.floor(camera.position.z/8);
-            for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) genChunk(cx+i, cz+j);
+            for(let i=-2; i<=2; i++) for(let j=-2; j<=2; j++) genChunk(cx+i, cz+j);
             conns.forEach(c => c.open && c.send({type:'move', id:peer.id, name:myName, skin:mySkin, x:camera.position.x, y:camera.position.y-1.6, z:camera.position.z, ry:lon*(Math.PI/180), rx:lat*(Math.PI/180)}));
             renderer.render(scene, camera);
         }
